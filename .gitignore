@@ -20,9 +20,15 @@ build/
 .history/
 
 # Data / results
-data/
+data/                     # Downloaded Parquet files (too large for git)
 results/*.csv
 results/*.png
+
+# Development tests (not committed)
+src/tests/
+
+# Internal documentation (not for public repo)
+QUANTIZATION_INTERNAL.md
 
 # Android
 android_demo/.gradle/
