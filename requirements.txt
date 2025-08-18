@@ -1,0 +1,23 @@
+# Core
+torch>=2.3.0
+torchvision>=0.18.0
+numpy>=1.26.0
+# Models & training
+transformers>=4.42.0
+datasets>=2.19.0
+accelerate>=0.33.0
+evaluate>=0.4.1
+timm>=0.9.16
+# Utils
+scikit-learn>=1.4.0
+matplotlib>=3.8.0
+pillow>=10.3.0
+
+# Quantization (desktop analysis; added later in steps)
+# awq  # (install when doing AWQ step; pinned in README at that time)
+# auto-gptq  # optional alternative
+# bitsandbytes  # for 8-bit baselines on desktop
+
+# ExecuTorch (device path) — installed later due to platform-specific wheels
+# executorch
+# torchao

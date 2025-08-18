@@ -1,0 +1,29 @@
+
+# Python
+__pycache__/
+*.py[cod]
+*.so
+.venv/
+.env
+.env.*
+.pytest_cache/
+.mypy_cache/
+.pytype/
+dist/
+build/
+*.egg-info/
+
+# OS / IDE
+.DS_Store
+.idea/
+.vscode/
+
+# Data / results
+data/
+results/*.csv
+results/*.png
+
+# Android
+android_demo/.gradle/
+android_demo/.cxx/
+android_demo/build/
