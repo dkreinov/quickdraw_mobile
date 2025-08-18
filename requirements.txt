@@ -12,6 +12,8 @@ timm>=0.9.16
 scikit-learn>=1.4.0
 matplotlib>=3.8.0
 pillow>=10.3.0
+pandas>=2.0.0
+tqdm>=4.64.0
 
 # Quantization (desktop analysis; added later in steps)
 # awq  # (install when doing AWQ step; pinned in README at that time)

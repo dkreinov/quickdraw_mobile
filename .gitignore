@@ -27,10 +27,9 @@ results/*.png
 # Development tests (not committed)
 src/tests/
 
-# Internal documentation (not for public repo)
-QUANTIZATION_INTERNAL.md
-
 # Android
 android_demo/.gradle/
 android_demo/.cxx/
 android_demo/build/
+data/
+QUANTIZATION_INTERNAL.md

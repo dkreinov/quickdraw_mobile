@@ -1,32 +1,42 @@
 
 """Step 2: QuickDraw (bitmap) dataset loader.
 
-Loads 28x28 grayscale bitmaps from HuggingFace google/quickdraw dataset.
+Loads 28x28 grayscale bitmaps from pre-converted Parquet files.
 Keeps them as single-channel (grayscale) for mobile efficiency.
 Provides class filtering and stratified splits for training.
+
+Note: Use scripts/download_quickdraw.py to convert HuggingFace data to Parquet format first.
 """
 from typing import List, Optional, Dict, Tuple
 import random
+import json
+import io
+from pathlib import Path
 
 import torch
 from torch.utils.data import Dataset, DataLoader
 import torchvision.transforms as transforms
-from datasets import load_dataset
+import pandas as pd
+from PIL import Image
 
 
 class QuickDrawDataset(Dataset):
     """
-    QuickDraw bitmap dataset (28x28 grayscale) from HuggingFace.
+    QuickDraw bitmap dataset (28x28 grayscale) loaded from Parquet files.
     
     Key features:
-    - Loads 28x28 grayscale bitmaps and upsamples to target size
+    - Loads 28x28 grayscale bitmaps from efficient Parquet format
     - Keeps single channel (no RGB conversion) for mobile efficiency  
     - Supports class filtering for faster iteration
     - Applies transforms for training/validation
+    
+    Prerequisites:
+    - Run scripts/download_quickdraw.py to convert HuggingFace data to Parquet first
     """
     
     def __init__(
         self,
+        data_dir: str = "data/quickdraw_parquet",
         classes: Optional[List[str]] = None,
         max_samples_per_class: Optional[int] = None,
         image_size: int = 224,
@@ -35,29 +45,42 @@ class QuickDrawDataset(Dataset):
     ):
         """
         Args:
-            classes: List of class names to include. If None, uses all 345 classes
+            data_dir: Directory containing Parquet files and metadata.json
+            classes: List of class names to include. If None, uses all available classes
             max_samples_per_class: Limit samples per class (for faster experimentation)  
             image_size: Target image size (224 for ViT, 256 for MobileViT)
             augment: Whether to apply data augmentation
             seed: Random seed for reproducible sampling
         """
-        print("Loading QuickDraw dataset...")
+        self.data_dir = Path(data_dir)
         
-        # Load the dataset from HuggingFace
-        self.hf_dataset = load_dataset("google/quickdraw", "preprocessed_bitmaps", split="train")
+        # Check if data directory exists
+        if not self.data_dir.exists():
+            raise FileNotFoundError(
+                f"Data directory not found: {data_dir}\n"
+                f"Please run: python scripts/download_quickdraw.py --num-classes 10 --samples-per-class 1000"
+            )
         
-        # Get all available class names (345 total)
-        all_class_names = self.hf_dataset.features["label"].names
-        print(f"Available classes: {len(all_class_names)}")
+        # Load metadata
+        metadata_file = self.data_dir / "metadata.json"
+        if not metadata_file.exists():
+            raise FileNotFoundError(f"Metadata file not found: {metadata_file}")
+            
+        with open(metadata_file, 'r') as f:
+            self.metadata = json.load(f)
+        
+        print(f"Loading QuickDraw dataset from: {data_dir}")
+        print(f"Available classes: {len(self.metadata['classes'])}")
         
         # Determine which classes to use
+        available_classes = self.metadata['classes']
         if classes is None:
-            self.selected_classes = all_class_names
+            self.selected_classes = available_classes
         else:
             # Validate that requested classes exist
-            missing_classes = [c for c in classes if c not in all_class_names]
+            missing_classes = [c for c in classes if c not in available_classes]
             if missing_classes:
-                raise ValueError(f"Unknown class names: {missing_classes}")
+                raise ValueError(f"Unknown class names: {missing_classes}. Available: {available_classes}")
             self.selected_classes = classes
             
         print(f"Using {len(self.selected_classes)} classes: {self.selected_classes[:10]}{'...' if len(self.selected_classes) > 10 else ''}")
@@ -67,10 +90,16 @@ class QuickDrawDataset(Dataset):
         self.class_to_id = {name: idx for idx, name in enumerate(self.selected_classes)}
         self.id_to_class = {idx: name for name, idx in self.class_to_id.items()}
         
-        # Sample dataset indices for selected classes
-        self.sample_indices = self._sample_dataset_indices(
-            all_class_names, max_samples_per_class, seed
-        )
+        # Load the data
+        parquet_file = self.data_dir / "quickdraw_data.parquet"
+        if not parquet_file.exists():
+            raise FileNotFoundError(f"Parquet data file not found: {parquet_file}")
+            
+        print("Loading Parquet data...")
+        self.df = pd.read_parquet(parquet_file)
+        
+        # Filter for selected classes and apply sampling limits
+        self.sample_indices = self._filter_and_sample_data(max_samples_per_class, seed)
         
         print(f"Total samples: {len(self.sample_indices)}")
         
@@ -78,32 +107,37 @@ class QuickDrawDataset(Dataset):
         self.image_size = image_size
         self.transforms = self._create_transforms(image_size, augment)
         
-        # Keep reference to original class names for lookup
-        self.all_class_names = all_class_names
+    def _filter_and_sample_data(self, max_per_class: Optional[int], seed: int) -> List[int]:
+        """Filter for selected classes and apply sampling limits."""
         
-    def _sample_dataset_indices(self, all_class_names: List[str], max_per_class: Optional[int], seed: int) -> List[int]:
-        """Sample indices from the dataset, optionally limiting samples per class."""
+        # Filter DataFrame for selected classes
+        filtered_df = self.df[self.df['class_name'].isin(self.selected_classes)].copy()
         
-        # Group indices by class
-        class_indices = {name: [] for name in self.selected_classes}
-        
-        print("Scanning dataset for selected classes...")
-        for idx, example in enumerate(self.hf_dataset):
-            class_name = all_class_names[example["label"]]
-            if class_name in class_indices:
-                class_indices[class_name].append(idx)
-                
-        # Sample from each class if limit is specified
-        random.seed(seed)
-        sampled_indices = []
-        
-        for class_name, indices in class_indices.items():
-            if max_per_class and len(indices) > max_per_class:
-                indices = random.sample(indices, max_per_class)
-            sampled_indices.extend(indices)
-            print(f"  {class_name}: {len(indices)} samples")
+        # Group by class and apply sampling limits
+        if max_per_class is not None:
+            random.seed(seed)
+            sampled_indices = []
             
-        return sampled_indices
+            for class_name in self.selected_classes:
+                class_rows = filtered_df[filtered_df['class_name'] == class_name]
+                
+                if len(class_rows) > max_per_class:
+                    # Sample randomly
+                    sampled_rows = class_rows.sample(n=max_per_class, random_state=seed)
+                else:
+                    sampled_rows = class_rows
+                
+                sampled_indices.extend(sampled_rows.index.tolist())
+                print(f"  {class_name}: {len(sampled_rows)} samples")
+            
+            return sampled_indices
+        else:
+            # Use all samples for selected classes
+            for class_name in self.selected_classes:
+                class_count = len(filtered_df[filtered_df['class_name'] == class_name])
+                print(f"  {class_name}: {class_count} samples")
+            
+            return filtered_df.index.tolist()
         
     def _create_transforms(self, image_size: int, augment: bool):
         """Create transform pipeline for images."""
@@ -145,18 +179,16 @@ class QuickDrawDataset(Dataset):
             image: Tensor of shape (1, H, W) - single channel grayscale
             label: Integer class ID (0 to num_classes-1)
         """
-        # Get the actual dataset index
-        dataset_idx = self.sample_indices[idx]
+        # Get the actual DataFrame index
+        df_idx = self.sample_indices[idx]
+        row = self.df.iloc[df_idx]
         
-        # Load the example from HuggingFace dataset
-        example = self.hf_dataset[dataset_idx]
+        # Load image from bytes
+        image_bytes = row['image_bytes']
+        image = Image.open(io.BytesIO(image_bytes)).convert('L')  # Ensure grayscale
         
-        # Get image (PIL Image in 'L' mode - grayscale) and label
-        image = example["image"]  # PIL Image, mode='L', size=(28, 28)
-        original_label = example["label"]
-        
-        # Convert original label to our contiguous class ID
-        class_name = self.all_class_names[original_label]
+        # Get class name and convert to our contiguous class ID
+        class_name = row['class_name']
         label = self.class_to_id[class_name]
         
         # Apply transforms (resize, augment, convert to tensor)
@@ -212,6 +244,7 @@ def create_stratified_split(
 
 
 def create_dataloaders(
+    data_dir: str = "data/quickdraw_parquet",
     classes: Optional[List[str]] = None,
     num_classes: Optional[int] = None,
     train_samples_per_class: int = 4000,
@@ -225,6 +258,7 @@ def create_dataloaders(
     Create training and validation dataloaders with metadata.
     
     Args:
+        data_dir: Directory containing Parquet files and metadata.json
         classes: Specific class names to use
         num_classes: If classes=None, randomly sample this many classes
         train_samples_per_class: Training samples per class
@@ -240,18 +274,28 @@ def create_dataloaders(
         metadata: Dict with class mappings and info
     """
     
+    # Load available classes from metadata
+    metadata_file = Path(data_dir) / "metadata.json"
+    if not metadata_file.exists():
+        raise FileNotFoundError(
+            f"Metadata file not found: {metadata_file}\n"
+            f"Please run: python scripts/download_quickdraw.py --num-classes 10 --samples-per-class 1000"
+        )
+    
+    with open(metadata_file, 'r') as f:
+        data_metadata = json.load(f)
+    
+    available_classes = data_metadata['classes']
+    
     # Auto-select classes if num_classes is specified
     if classes is None and num_classes is not None:
-        # Get all available classes and sample subset
-        tmp_dataset = load_dataset("google/quickdraw", "preprocessed_bitmaps", split="train")
-        all_class_names = tmp_dataset.features["label"].names
-        
         random.seed(seed)
-        classes = sorted(random.sample(all_class_names, num_classes))
+        classes = sorted(random.sample(available_classes, min(num_classes, len(available_classes))))
         print(f"Auto-selected {num_classes} classes: {classes}")
     
     # Create training dataset (with augmentation)
     train_dataset = QuickDrawDataset(
+        data_dir=data_dir,
         classes=classes,
         max_samples_per_class=train_samples_per_class + val_samples_per_class,
         image_size=image_size,
@@ -261,6 +305,7 @@ def create_dataloaders(
     
     # Create validation dataset (no augmentation)
     val_dataset = QuickDrawDataset(
+        data_dir=data_dir,
         classes=train_dataset.selected_classes,  # Use same classes as train
         max_samples_per_class=train_samples_per_class + val_samples_per_class,
         image_size=image_size,
@@ -314,7 +359,16 @@ def create_dataloaders(
     return train_loader, val_loader, metadata
 
 
-def get_all_class_names() -> List[str]:
-    """Get list of all 345 QuickDraw class names."""
-    dataset = load_dataset("google/quickdraw", "preprocessed_bitmaps", split="train")
-    return dataset.features["label"].names
+def get_all_class_names(data_dir: str = "data/quickdraw_parquet") -> List[str]:
+    """Get list of all available QuickDraw class names from downloaded data."""
+    metadata_file = Path(data_dir) / "metadata.json"
+    if not metadata_file.exists():
+        raise FileNotFoundError(
+            f"Metadata file not found: {metadata_file}\n"
+            f"Please run: python scripts/download_quickdraw.py to download data first"
+        )
+    
+    with open(metadata_file, 'r') as f:
+        metadata = json.load(f)
+    
+    return metadata['classes']
