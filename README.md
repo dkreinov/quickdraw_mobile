@@ -90,6 +90,7 @@ print(f'✅ Data pipeline OK: {meta[\"num_classes\"]} classes, {meta[\"train_sam
 ```
 scripts/
   download_quickdraw.py   # ✅ Download & convert QuickDraw to Parquet
+  view_sketches.py        # ✅ Interactive sketch viewer for dataset exploration
 src/
   data.py                 # ✅ QuickDraw Parquet loader (28x28→224x224, single-channel)
   models.py               # MobileViT/ViT factory with 1-channel support
@@ -126,7 +127,27 @@ results/                  # (later) metrics & plots
 
 **Why single-channel?**
 - Matches mobile inference reality (finger drawings ≈ 28x28 grayscale)
-- 3x smaller model size and memory usage
+
+## Viewing QuickDraw Sketches
+
+After downloading the dataset, you can visualize the sketches using the interactive viewer:
+
+```bash
+# Interactive mode with menu
+python scripts/view_sketches.py --interactive
+
+# View specific classes  
+python scripts/view_sketches.py --classes cat dog apple --num-samples 16
+
+# Save visualization to file (useful for headless environments)
+python scripts/view_sketches.py --random-classes 5 --save sketches.png
+
+# List all available classes
+python scripts/view_sketches.py --list-classes
+```
+
+**Benefits of single-channel:**
+- 3x smaller model size and memory usage  
 - Faster training and inference
 - Authentic representation of doodle data
 

@@ -23,6 +23,7 @@ build/
 data/                     # Downloaded Parquet files (too large for git)
 results/*.csv
 results/*.png
+scripts/output/           # Generated sketch visualizations
 
 # Development tests (not committed)
 src/tests/
