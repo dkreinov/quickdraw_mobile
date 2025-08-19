@@ -41,6 +41,7 @@ class QuickDrawDataset(Dataset):
         max_samples_per_class: Optional[int] = None,
         image_size: int = 224,
         augment: bool = True,
+        invert_colors: bool = True,
         seed: int = 42
     ):
         """
@@ -50,6 +51,7 @@ class QuickDrawDataset(Dataset):
             max_samples_per_class: Limit samples per class (for faster experimentation)  
             image_size: Target image size (224 for ViT, 256 for MobileViT)
             augment: Whether to apply data augmentation
+            invert_colors: If True, invert colors to black-on-white for training (default: True)
             seed: Random seed for reproducible sampling
         """
         self.data_dir = Path(data_dir)
@@ -105,6 +107,7 @@ class QuickDrawDataset(Dataset):
         
         # Setup transforms
         self.image_size = image_size
+        self.invert_colors = invert_colors
         self.transforms = self._create_transforms(image_size, augment)
         
     def _filter_and_sample_data(self, max_per_class: Optional[int], seed: int) -> List[int]:
@@ -194,6 +197,10 @@ class QuickDrawDataset(Dataset):
         # Apply transforms (resize, augment, convert to tensor)
         image = self.transforms(image)
         
+        # Invert colors if requested (white-on-black → black-on-white for training)
+        if self.invert_colors:
+            image = 1.0 - image
+        
         return image, label
     
     @property
@@ -252,6 +259,7 @@ def create_dataloaders(
     image_size: int = 224,
     batch_size: int = 64,
     num_workers: int = 4,
+    invert_colors: bool = True,
     seed: int = 42
 ) -> Tuple[DataLoader, DataLoader, Dict]:
     """
@@ -266,6 +274,7 @@ def create_dataloaders(
         image_size: Target image size
         batch_size: Batch size for dataloaders
         num_workers: Number of workers for data loading
+        invert_colors: If True, invert colors to black-on-white for training (default: True)
         seed: Random seed
         
     Returns:
@@ -300,6 +309,7 @@ def create_dataloaders(
         max_samples_per_class=train_samples_per_class + val_samples_per_class,
         image_size=image_size,
         augment=True,
+        invert_colors=invert_colors,
         seed=seed
     )
     
@@ -310,6 +320,7 @@ def create_dataloaders(
         max_samples_per_class=train_samples_per_class + val_samples_per_class,
         image_size=image_size,
         augment=False,  # No augmentation for validation
+        invert_colors=invert_colors,
         seed=seed
     )
     

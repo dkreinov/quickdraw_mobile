@@ -127,6 +127,7 @@ results/                  # (later) metrics & plots
 
 **Why single-channel?**
 - Matches mobile inference reality (finger drawings ≈ 28x28 grayscale)
+- Model trains on **black-on-white** format (inverted from original dataset) to match mobile drawing UI
 
 ## Viewing QuickDraw Sketches
 
@@ -142,9 +143,14 @@ python scripts/view_sketches.py --classes cat dog apple --num-samples 16
 # Save visualization to file (useful for headless environments)
 python scripts/view_sketches.py --random-classes 5 --save sketches.png
 
+# Invert colors for traditional black-on-white appearance  
+python scripts/view_sketches.py --classes cat dog --invert-colors
+
 # List all available classes
 python scripts/view_sketches.py --list-classes
 ```
+
+**Note on Colors**: QuickDraw sketches are stored with white strokes on black background (original format), but the **model trains on black-on-white** (inverted) to match mobile drawing interfaces. The viewer shows original format by default; use `--invert-colors` to see the training format.
 
 **Benefits of single-channel:**
 - 3x smaller model size and memory usage  
@@ -165,6 +171,102 @@ python scripts/view_sketches.py --list-classes
 # List all 345 available classes
 .venv/bin/python scripts/download_quickdraw.py --list-classes
 ```
+
+## Mobile App Architecture
+
+After training and quantizing the model, we plan to create a minimal Android app for live sketch classification.
+
+### MVP Features
+- **On-screen drawing**: Black strokes on white UI background
+- **Live classification**: Real-time inference as user draws
+- **Color preprocessing**: Invert colors before model input (since dataset is white-on-black)
+
+### Later Enhancements
+- **Camera mode**: Photo capture with preprocessing pipeline for hand-drawn sketches
+- **Improved UX**: Drawing tools, undo/clear, confidence scores
+
+### App Architecture (Android/Kotlin + ExecuTorch)
+
+#### Core Components
+
+**1. CanvasView**
+- Finger/stylus drawing to Bitmap
+- White background, black strokes
+- Standard Android drawing canvas
+
+**2. Preprocessing Pipeline**
+```kotlin
+// Convert drawing to model input
+fun preprocessDrawing(bitmap: Bitmap): FloatArray {
+    // 1. Resize to 224x224 with NEAREST interpolation
+    val resized = Bitmap.createScaledBitmap(bitmap, 224, 224, false)
+    val input = FloatArray(1 * 224 * 224)
+    
+    // 2. Convert to grayscale + normalize + invert colors
+    var idx = 0
+    for (y in 0 until 224) {
+        for (x in 0 until 224) {
+            val pixel = resized.getPixel(x, y)
+            val r = (pixel shr 16 and 0xFF)
+            val g = (pixel shr 8  and 0xFF) 
+            val b = (pixel        and 0xFF)
+            
+            // Grayscale conversion
+            var gray = (0.299f*r + 0.587f*g + 0.114f*b) / 255f
+            
+            // Invert: black strokes → white strokes (match training data)
+            gray = 1f - gray
+            
+            // Normalize to [-1, 1] range (mean=0.5, std=0.5)
+            input[idx++] = (gray - 0.5f) / 0.5f
+        }
+    }
+    return input
+}
+```
+
+**3. Inference Engine**
+- Load INT8 W8A8 ExecuTorch `.pte` model
+- Run inference on preprocessed input
+- Display top-k classification results
+
+**4. User Interface**
+- "Clear" and "Undo" buttons
+- Optional "Live classify" toggle (classify every ~200ms while drawing)
+- Real-time confidence scores display
+
+### Camera Mode (Future Enhancement)
+
+When adding photo capture support:
+
+**Preprocessing Pipeline**
+1. **Grayscale conversion** from camera input
+2. **Adaptive thresholding** to isolate drawing from background
+3. **Contour detection** to find largest sketch area
+4. **Perspective correction** and crop to square
+5. **Resize to 224x224** with NEAREST interpolation
+6. **Color inversion** (if needed) to match training format
+7. **Normalization** to model input range
+
+**Failure Handling**
+- Detect low contrast/blur and prompt user to retake photo
+- Guide user to improve lighting/positioning
+- Fallback to manual drawing mode
+
+### Technical Notes
+
+- **Model Format**: INT8 quantized ExecuTorch `.pte` file
+- **Inference Backend**: XNNPACK for optimized CPU execution
+- **Target Devices**: Android 8.0+ with ARM64 processors
+- **Memory Usage**: <50MB for model + preprocessing
+- **Latency Target**: <100ms for single sketch classification
+
+### Development Timeline
+
+1. **Phase 1**: Basic drawing canvas + preprocessing
+2. **Phase 2**: ExecuTorch model integration + inference
+3. **Phase 3**: UI polish + live classification
+4. **Phase 4**: Camera mode + advanced preprocessing
 
 ## License
 MIT — see [LICENSE](LICENSE).

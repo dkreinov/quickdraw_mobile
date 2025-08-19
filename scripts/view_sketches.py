@@ -22,6 +22,9 @@ Usage Examples:
     # Save to file (useful for headless environments)
     python scripts/view_sketches.py --classes cat dog --save sketches.png
     
+    # Invert colors for traditional black-on-white appearance
+    python scripts/view_sketches.py --classes cat dog --invert-colors
+    
     # List all available classes
     python scripts/view_sketches.py --list-classes
 """
@@ -57,7 +60,8 @@ def plot_sketches_grid(
     title: str = "QuickDraw Sketches",
     figsize: Tuple[int, int] = None,
     save_path: Optional[str] = None,
-    output_dir: str = "scripts/output"
+    output_dir: str = "scripts/output",
+    invert_colors: bool = False
 ):
     """
     Plot a grid of sketches with their class labels.
@@ -69,6 +73,8 @@ def plot_sketches_grid(
         title: Plot title
         figsize: Figure size (width, height)
         save_path: Optional path to save the plot
+        output_dir: Directory to save plots to
+        invert_colors: If True, show black strokes on white background (default: white on black)
     """
     
     n_images = len(images)
@@ -96,8 +102,11 @@ def plot_sketches_grid(
     for i in range(n_images):
         ax = axes[i]
         
+        # Optionally invert colors (white strokes on black -> black strokes on white)
+        image_to_show = 255 - images[i] if invert_colors else images[i]
+        
         # Display image
-        ax.imshow(images[i], cmap='gray', interpolation='nearest')
+        ax.imshow(image_to_show, cmap='gray', interpolation='nearest')
         ax.set_title(f"{class_names[labels[i]]}", fontsize=10, pad=5)
         ax.axis('off')
         
@@ -219,7 +228,7 @@ def interactive_sketch_viewer(data_dir: str = "data/quickdraw_parquet"):
                 num_samples = int(input("Number of sketches to display (default 16): ") or "16")
                 
                 print(f"\n🎲 Loading {num_samples} random sketches...")
-                dataset = QuickDrawDataset(data_dir=data_dir, augment=False)
+                dataset = QuickDrawDataset(data_dir=data_dir, augment=False, invert_colors=False)
                 
                 images, labels, class_names = load_sample_sketches(
                     dataset, num_samples=num_samples
@@ -249,7 +258,7 @@ def interactive_sketch_viewer(data_dir: str = "data/quickdraw_parquet"):
                     continue
                 
                 print(f"\n🖼️  Loading sketches from classes: {classes}")
-                dataset = QuickDrawDataset(data_dir=data_dir, classes=classes, augment=False)
+                dataset = QuickDrawDataset(data_dir=data_dir, classes=classes, augment=False, invert_colors=False)
                 
                 images, labels, class_names = load_sample_sketches(
                     dataset, num_samples=num_samples, classes=classes
@@ -273,7 +282,7 @@ def interactive_sketch_viewer(data_dir: str = "data/quickdraw_parquet"):
                 num_samples = int(input("Number of sketches to display (default 25): ") or "25")
                 
                 print(f"\n🖼️  Loading {num_samples} sketches of '{class_name}'...")
-                dataset = QuickDrawDataset(data_dir=data_dir, classes=[class_name], augment=False)
+                dataset = QuickDrawDataset(data_dir=data_dir, classes=[class_name], augment=False, invert_colors=False)
                 
                 images, labels, class_names = load_sample_sketches(
                     dataset, num_samples=num_samples, classes=[class_name]
@@ -326,6 +335,8 @@ def main():
     parser.add_argument("--save", help="Save plot to file")
     parser.add_argument("--output-dir", default="scripts/output", 
                        help="Output directory for saved plots (default: scripts/output)")
+    parser.add_argument("--invert-colors", action="store_true",
+                       help="Invert colors (black strokes on white background instead of white on black)")
     parser.add_argument("--figsize", nargs=2, type=int, metavar=("WIDTH", "HEIGHT"),
                        help="Figure size in inches")
     parser.add_argument("--list-classes", action="store_true",
@@ -387,6 +398,7 @@ def main():
             data_dir=args.data_dir,
             classes=selected_classes,
             augment=False,  # No augmentation for viewing
+            invert_colors=False,  # Show original format for visualization
             seed=args.seed
         )
         
@@ -410,7 +422,8 @@ def main():
             title=title,
             figsize=tuple(args.figsize) if args.figsize else None,
             save_path=args.save,
-            output_dir=args.output_dir
+            output_dir=args.output_dir,
+            invert_colors=args.invert_colors
         )
         
         print(f"✅ Displayed {len(images)} sketches")
