@@ -28,6 +28,16 @@ scripts/output/           # Generated sketch visualizations
 # Development tests (not committed)
 src/tests/
 
+# Test artifacts and outputs (keep tests/ folder but ignore artifacts)
+tests/*/test_*.log
+tests/*/temp_*
+tests/*/__pycache__/
+tests/*/coverage.xml
+tests/*/htmlcov/
+tests/*/.coverage
+tests/*/test_results/
+logs/test_*.log
+
 # Android
 android_demo/.gradle/
 android_demo/.cxx/

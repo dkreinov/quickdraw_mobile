@@ -20,10 +20,22 @@ from pathlib import Path
 from typing import List, Optional
 import random
 import io
+import sys
 
 import pandas as pd
 from PIL import Image
 from tqdm import tqdm
+
+# Add src to path for logging
+sys.path.append(str(Path(__file__).parent.parent / "src"))
+try:
+    from logging_config import get_logger, log_and_print
+except ImportError:
+    # Fallback if logging config is not available
+    def log_and_print(msg, **kwargs):
+        print(msg)
+    def get_logger(name):
+        return None
 
 
 # Google's QuickDraw class list (345 classes)
@@ -142,10 +154,11 @@ def download_and_convert(
     output_path = Path(output_dir)
     output_path.mkdir(parents=True, exist_ok=True)
     
-    print(f"📥 Downloading QuickDraw data directly from Google...")
-    print(f"   Classes: {len(classes)} classes")
-    print(f"   Samples per class: {samples_per_class}")
-    print(f"   Output directory: {output_path}")
+    logger = get_logger(__name__)
+    log_and_print(f"Downloading QuickDraw data directly from Google...", logger_instance=logger)
+    log_and_print(f"   Classes: {len(classes)} classes", logger_instance=logger)
+    log_and_print(f"   Samples per class: {samples_per_class}", logger_instance=logger)
+    log_and_print(f"   Output directory: {output_path}", logger_instance=logger)
     
     # Create class ID mapping
     class_to_id = {name: idx for idx, name in enumerate(sorted(classes))}
@@ -166,18 +179,18 @@ def download_and_convert(
             all_samples.extend(samples)
             successful_classes.append(class_name)
         else:
-            print(f"⚠️  Failed to download {class_name}")
+            print(f"  Failed to download {class_name}")
     
     if not all_samples:
         raise RuntimeError("Failed to download any data!")
     
-    print(f"\n✅ Successfully downloaded {len(successful_classes)}/{len(classes)} classes")
-    print(f"   Total samples: {len(all_samples)}")
+    log_and_print(f"\nSuccessfully downloaded {len(successful_classes)}/{len(classes)} classes", logger_instance=logger)
+    log_and_print(f"   Total samples: {len(all_samples)}", logger_instance=logger)
     
     # Shuffle all samples
     random.shuffle(all_samples)
     
-    print(f"\n💾 Converting {len(all_samples)} samples to Parquet format...")
+    log_and_print(f"\nConverting {len(all_samples)} samples to Parquet format...", logger_instance=logger)
     
     # Create DataFrame
     df = pd.DataFrame(all_samples)
@@ -208,11 +221,11 @@ def download_and_convert(
     with open(metadata_file, 'w') as f:
         json.dump(metadata, f, indent=2)
     
-    print(f"\n✅ Conversion complete!")
-    print(f"   Data file: {parquet_file}")
-    print(f"   Metadata: {metadata_file}")
-    print(f"   Total size: {parquet_file.stat().st_size / (1024*1024):.1f} MB")
-    print(f"   Successfully downloaded: {len(successful_classes)} classes")
+    log_and_print(f"\nConversion complete!", logger_instance=logger)
+    log_and_print(f"   Data file: {parquet_file}", logger_instance=logger)
+    log_and_print(f"   Metadata: {metadata_file}", logger_instance=logger)
+    log_and_print(f"   Total size: {parquet_file.stat().st_size / (1024*1024):.1f} MB", logger_instance=logger)
+    log_and_print(f"   Successfully downloaded: {len(successful_classes)} classes", logger_instance=logger)
     
     if len(successful_classes) < len(classes):
         failed_classes = set(classes) - set(successful_classes)
@@ -260,14 +273,14 @@ def verify_download(output_dir: str):
             assert 0 <= label < metadata['num_classes'], f"Invalid label: {label}"
             assert class_name in metadata['classes'], f"Invalid class name: {class_name}"
         
-        print(f"✅ Verification passed:")
+        print(f" Verification passed:")
         print(f"   📊 {len(df):,} samples across {metadata['num_classes']} classes")
         print(f"   🖼️  Images: 28x28 grayscale PNG format")
         print(f"   📝 Metadata: consistent labels and class mappings")
-        print(f"   💾 File size: {(parquet_file.stat().st_size / (1024*1024)):.1f} MB")
+        print(f"    File size: {(parquet_file.stat().st_size / (1024*1024)):.1f} MB")
         
     except Exception as e:
-        print(f"⚠️  Verification warning: {e}")
+        print(f"  Verification warning: {e}")
         print(f"   Dataset may still be usable, but please check manually")
 
 
@@ -293,7 +306,7 @@ def main():
     
     # Handle list classes option
     if args.list_classes:
-        print("📋 Available QuickDraw classes:")
+        print(" Available QuickDraw classes:")
         for i, class_name in enumerate(QUICKDRAW_CLASSES, 1):
             print(f"  {i:3d}. {class_name}")
         print(f"\nTotal: {len(QUICKDRAW_CLASSES)} classes")
@@ -304,17 +317,17 @@ def main():
         # Validate class names
         missing_classes = [c for c in args.classes if c not in QUICKDRAW_CLASSES]
         if missing_classes:
-            print(f"❌ Unknown class names: {missing_classes}")
+            print(f" Unknown class names: {missing_classes}")
             print(f"Use --list-classes to see all available classes")
             return 1
         selected_classes = args.classes
     elif args.num_classes:
         np.random.seed(args.seed)
         selected_classes = sorted(np.random.choice(QUICKDRAW_CLASSES, args.num_classes, replace=False))
-        print(f"🎲 Randomly selected {args.num_classes} classes: {selected_classes}")
+        print(f" Randomly selected {args.num_classes} classes: {selected_classes}")
     elif args.all_classes:
         selected_classes = QUICKDRAW_CLASSES
-        print(f"📦 Downloading all {len(selected_classes)} classes")
+        print(f" Downloading all {len(selected_classes)} classes")
     
     # Download and convert
     try:
@@ -326,16 +339,16 @@ def main():
         )
         
         # Verify the download integrity
-        print(f"\n🧪 Verifying download integrity...")
+        print(f"\n Verifying download integrity...")
         verify_download(output_dir)
         
-        print(f"\n🎉 Success! QuickDraw dataset ready for training.")
+        print(f"\n Success! QuickDraw dataset ready for training.")
         print(f"   Use this in your training script:")
         print(f"   from data import QuickDrawDataset")
         print(f"   dataset = QuickDrawDataset(data_dir='{output_dir}')")
         
     except Exception as e:
-        print(f"\n❌ Error: {e}")
+        print(f"\n Error: {e}")
         import traceback
         traceback.print_exc()
         return 1

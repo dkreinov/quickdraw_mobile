@@ -18,6 +18,7 @@ from torch.utils.data import Dataset, DataLoader
 import torchvision.transforms as transforms
 import pandas as pd
 from PIL import Image
+from .logging_config import get_logger, log_and_print
 
 
 class QuickDrawDataset(Dataset):
@@ -71,8 +72,9 @@ class QuickDrawDataset(Dataset):
         with open(metadata_file, 'r') as f:
             self.metadata = json.load(f)
         
-        print(f"Loading QuickDraw dataset from: {data_dir}")
-        print(f"Available classes: {len(self.metadata['classes'])}")
+        logger = get_logger(__name__)
+        log_and_print(f"Loading QuickDraw dataset from: {data_dir}", logger_instance=logger)
+        log_and_print(f"Available classes: {len(self.metadata['classes'])}", logger_instance=logger)
         
         # Determine which classes to use
         available_classes = self.metadata['classes']
@@ -85,7 +87,7 @@ class QuickDrawDataset(Dataset):
                 raise ValueError(f"Unknown class names: {missing_classes}. Available: {available_classes}")
             self.selected_classes = classes
             
-        print(f"Using {len(self.selected_classes)} classes: {self.selected_classes[:10]}{'...' if len(self.selected_classes) > 10 else ''}")
+        log_and_print(f"Using {len(self.selected_classes)} classes: {self.selected_classes[:10]}{'...' if len(self.selected_classes) > 10 else ''}", logger_instance=logger)
         
         # Create mapping from class names to contiguous IDs (0, 1, 2, ...)
         self.selected_classes = sorted(self.selected_classes)  # Keep consistent order
@@ -97,13 +99,13 @@ class QuickDrawDataset(Dataset):
         if not parquet_file.exists():
             raise FileNotFoundError(f"Parquet data file not found: {parquet_file}")
             
-        print("Loading Parquet data...")
+        log_and_print("Loading Parquet data...", logger_instance=logger)
         self.df = pd.read_parquet(parquet_file)
         
         # Filter for selected classes and apply sampling limits
         self.sample_indices = self._filter_and_sample_data(max_samples_per_class, seed)
         
-        print(f"Total samples: {len(self.sample_indices)}")
+        log_and_print(f"Total samples: {len(self.sample_indices)}", logger_instance=logger)
         
         # Setup transforms
         self.image_size = image_size
@@ -131,6 +133,8 @@ class QuickDrawDataset(Dataset):
                     sampled_rows = class_rows
                 
                 sampled_indices.extend(sampled_rows.index.tolist())
+                logger = get_logger(__name__)
+                logger.info(f"  {class_name}: {len(sampled_rows)} samples")
                 print(f"  {class_name}: {len(sampled_rows)} samples")
             
             return sampled_indices
@@ -138,6 +142,8 @@ class QuickDrawDataset(Dataset):
             # Use all samples for selected classes
             for class_name in self.selected_classes:
                 class_count = len(filtered_df[filtered_df['class_name'] == class_name])
+                logger = get_logger(__name__)
+                logger.info(f"  {class_name}: {class_count} samples")
                 print(f"  {class_name}: {class_count} samples")
             
             return filtered_df.index.tolist()
@@ -245,6 +251,8 @@ def create_stratified_split(
         val_indices.extend(indices[train_end:val_end])
         
         class_name = dataset.id_to_class[class_id]
+        logger = get_logger(__name__)
+        logger.info(f"  {class_name}: {train_end} train, {val_end - train_end} val samples")
         print(f"  {class_name}: {train_end} train, {val_end - train_end} val samples")
     
     return train_indices, val_indices
@@ -300,7 +308,8 @@ def create_dataloaders(
     if classes is None and num_classes is not None:
         random.seed(seed)
         classes = sorted(random.sample(available_classes, min(num_classes, len(available_classes))))
-        print(f"Auto-selected {num_classes} classes: {classes}")
+        logger = get_logger(__name__)
+        log_and_print(f"Auto-selected {num_classes} classes: {classes}", logger_instance=logger)
     
     # Create training dataset (with augmentation)
     train_dataset = QuickDrawDataset(
@@ -325,7 +334,8 @@ def create_dataloaders(
     )
     
     # Create stratified split
-    print("\nCreating stratified train/val split...")
+    logger = get_logger(__name__)
+    log_and_print("\nCreating stratified train/val split...", logger_instance=logger)
     train_indices, val_indices = create_stratified_split(
         train_dataset, train_samples_per_class, val_samples_per_class, seed
     )
@@ -363,9 +373,9 @@ def create_dataloaders(
         'val_samples': len(val_indices)
     }
     
-    print(f"\nDataloaders created:")
-    print(f"  Training: {len(train_loader)} batches ({len(train_indices)} samples)")
-    print(f"  Validation: {len(val_loader)} batches ({len(val_indices)} samples)")
+    log_and_print(f"\nDataloaders created:", logger_instance=logger)
+    log_and_print(f"  Training: {len(train_loader)} batches ({len(train_indices)} samples)", logger_instance=logger)
+    log_and_print(f"  Validation: {len(val_loader)} batches ({len(val_indices)} samples)", logger_instance=logger)
     
     return train_loader, val_loader, metadata
 

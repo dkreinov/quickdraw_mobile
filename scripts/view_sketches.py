@@ -48,7 +48,7 @@ sys.path.append(str(Path(__file__).parent.parent / "src"))
 try:
     from data import QuickDrawDataset, get_all_class_names
 except ImportError as e:
-    print(f"❌ Error importing data module: {e}")
+    print(f"Error importing data module: {e}")
     print("Make sure you're running this from the project root directory")
     sys.exit(1)
 
@@ -134,7 +134,7 @@ def plot_sketches_grid(
             full_save_path = save_file
             
         plt.savefig(full_save_path, dpi=150, bbox_inches='tight')
-        print(f"💾 Plot saved to: {full_save_path}")
+        print(f"Plot saved to: {full_save_path}")
     
     plt.show()
 
@@ -177,7 +177,7 @@ def load_sample_sketches(
                 available_indices.append(idx)
     
     if len(available_indices) == 0:
-        print("❌ No samples found for the specified classes")
+        print("No samples found for the specified classes")
         return [], [], []
     
     # Sample random indices
@@ -205,13 +205,13 @@ def interactive_sketch_viewer(data_dir: str = "data/quickdraw_parquet"):
     Interactive sketch viewer with menu options.
     """
     
-    print("🎨 QuickDraw Sketch Viewer")
+    print("QuickDraw Sketch Viewer")
     print("=" * 50)
     
     try:
         # Load available classes
         available_classes = get_all_class_names(data_dir)
-        print(f"📊 Found {len(available_classes)} available classes")
+        print(f"Found {len(available_classes)} available classes")
         
         while True:
             print("\nChoose an option:")
@@ -227,7 +227,7 @@ def interactive_sketch_viewer(data_dir: str = "data/quickdraw_parquet"):
                 # Random sketches from all classes
                 num_samples = int(input("Number of sketches to display (default 16): ") or "16")
                 
-                print(f"\n🎲 Loading {num_samples} random sketches...")
+                print(f"\nLoading {num_samples} random sketches...")
                 dataset = QuickDrawDataset(data_dir=data_dir, augment=False, invert_colors=False)
                 
                 images, labels, class_names = load_sample_sketches(
@@ -254,10 +254,10 @@ def interactive_sketch_viewer(data_dir: str = "data/quickdraw_parquet"):
                 # Validate classes
                 invalid_classes = [cls for cls in classes if cls not in available_classes]
                 if invalid_classes:
-                    print(f"⚠️  Unknown classes: {invalid_classes}")
+                    print(f"Unknown classes: {invalid_classes}")
                     continue
                 
-                print(f"\n🖼️  Loading sketches from classes: {classes}")
+                print(f"\nLoading sketches from classes: {classes}")
                 dataset = QuickDrawDataset(data_dir=data_dir, classes=classes, augment=False, invert_colors=False)
                 
                 images, labels, class_names = load_sample_sketches(
@@ -276,12 +276,12 @@ def interactive_sketch_viewer(data_dir: str = "data/quickdraw_parquet"):
                 class_name = input("Enter class name: ").strip()
                 
                 if class_name not in available_classes:
-                    print(f"⚠️  Unknown class: {class_name}")
+                    print(f"Unknown class: {class_name}")
                     continue
                 
                 num_samples = int(input("Number of sketches to display (default 25): ") or "25")
                 
-                print(f"\n🖼️  Loading {num_samples} sketches of '{class_name}'...")
+                print(f"\nLoading {num_samples} sketches of '{class_name}'...")
                 dataset = QuickDrawDataset(data_dir=data_dir, classes=[class_name], augment=False, invert_colors=False)
                 
                 images, labels, class_names = load_sample_sketches(
@@ -296,21 +296,21 @@ def interactive_sketch_viewer(data_dir: str = "data/quickdraw_parquet"):
                 
             elif choice == '4':
                 # List all classes
-                print(f"\n📋 All available classes ({len(available_classes)}):")
+                print(f"\nAll available classes ({len(available_classes)}):")
                 for i, cls in enumerate(available_classes, 1):
                     print(f"  {i:3d}. {cls}")
                 
             elif choice == '5':
-                print("👋 Goodbye!")
+                print("Goodbye!")
                 break
                 
             else:
-                print("❌ Invalid choice. Please enter 1-5.")
+                print("Invalid choice. Please enter 1-5.")
                 
     except KeyboardInterrupt:
-        print("\n👋 Goodbye!")
+        print("\nGoodbye!")
     except Exception as e:
-        print(f"❌ Error: {e}")
+        print(f" Error: {e}")
         import traceback
         traceback.print_exc()
 
@@ -346,7 +346,7 @@ def main():
     
     # Check if data directory exists
     if not Path(args.data_dir).exists():
-        print(f"❌ Data directory not found: {args.data_dir}")
+        print(f"Data directory not found: {args.data_dir}")
         print("Please run the download script first:")
         print("  python scripts/download_quickdraw_direct.py --num-classes 10 --samples-per-class 1000")
         return 1
@@ -355,7 +355,7 @@ def main():
         # List classes option
         if args.list_classes:
             available_classes = get_all_class_names(args.data_dir)
-            print(f"📋 Available QuickDraw classes ({len(available_classes)}):")
+            print(f"Available QuickDraw classes ({len(available_classes)}):")
             for i, cls in enumerate(available_classes, 1):
                 print(f"  {i:3d}. {cls}")
             return 0
@@ -372,13 +372,13 @@ def main():
             # Validate classes
             invalid_classes = [cls for cls in args.classes if cls not in available_classes]
             if invalid_classes:
-                print(f"❌ Unknown classes: {invalid_classes}")
+                print(f"Unknown classes: {invalid_classes}")
                 print("Use --list-classes to see all available classes")
                 return 1
             selected_classes = args.classes
         elif args.class_name:
             if args.class_name not in available_classes:
-                print(f"❌ Unknown class: {args.class_name}")
+                print(f"Unknown class: {args.class_name}")
                 print("Use --list-classes to see all available classes")
                 return 1
             selected_classes = [args.class_name]
@@ -386,14 +386,14 @@ def main():
             random.seed(args.seed)
             selected_classes = random.sample(available_classes, 
                                            min(args.random_classes, len(available_classes)))
-            print(f"🎲 Randomly selected classes: {selected_classes}")
+            print(f" Randomly selected classes: {selected_classes}")
         else:
             # Default: show interactive mode
             interactive_sketch_viewer(args.data_dir)
             return 0
         
         # Load dataset
-        print(f"📊 Loading dataset with classes: {selected_classes}")
+        print(f" Loading dataset with classes: {selected_classes}")
         dataset = QuickDrawDataset(
             data_dir=args.data_dir,
             classes=selected_classes,
@@ -403,7 +403,7 @@ def main():
         )
         
         # Load sample sketches
-        print(f"🖼️  Loading {args.num_samples} sample sketches...")
+        print(f"  Loading {args.num_samples} sample sketches...")
         images, labels, class_names = load_sample_sketches(
             dataset, 
             num_samples=args.num_samples,
@@ -412,7 +412,7 @@ def main():
         )
         
         if not images:
-            print("❌ No images to display")
+            print(" No images to display")
             return 1
         
         # Create plot
@@ -426,10 +426,10 @@ def main():
             invert_colors=args.invert_colors
         )
         
-        print(f"✅ Displayed {len(images)} sketches")
+        print(f" Displayed {len(images)} sketches")
         
     except Exception as e:
-        print(f"❌ Error: {e}")
+        print(f" Error: {e}")
         import traceback
         traceback.print_exc()
         return 1
