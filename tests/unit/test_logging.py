@@ -36,10 +36,8 @@ class TestLoggingConfiguration(unittest.TestCase):
     def test_setup_logger_with_custom_file(self):
         """Test logger setup with custom log file."""
         logger = setup_logger(
-            name="test_logger",
             log_file=self.test_log_file,
-            console_output=False,  # Disable console for clean test output
-            file_output=True
+            console_output=False  # Disable console for clean test output
         )
         
         # Test logging
@@ -57,10 +55,8 @@ class TestLoggingConfiguration(unittest.TestCase):
     def test_log_and_print_function(self):
         """Test the log_and_print utility function."""
         logger = setup_logger(
-            name="test_log_print",
             log_file=self.test_log_file,
-            console_output=False,
-            file_output=True
+            console_output=False
         )
         
         test_message = "Test log and print message"

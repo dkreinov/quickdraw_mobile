@@ -18,7 +18,14 @@ from torch.utils.data import Dataset, DataLoader
 import torchvision.transforms as transforms
 import pandas as pd
 from PIL import Image
-from .logging_config import get_logger, log_and_print
+
+# Try to import logging config, fallback to basic logging if not available
+try:
+    from .logging_config import get_logger, log_and_print
+except ImportError:
+    import logging
+    def get_logger(name): return logging.getLogger(name)
+    def log_and_print(msg, logger_instance=None, level="INFO"): print(msg)
 
 
 class QuickDrawDataset(Dataset):

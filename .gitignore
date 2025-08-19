@@ -38,6 +38,9 @@ tests/*/.coverage
 tests/*/test_results/
 logs/test_*.log
 
+# Application logs (ignore all log files in logs directory)
+logs/*.log
+
 # Android
 android_demo/.gradle/
 android_demo/.cxx/

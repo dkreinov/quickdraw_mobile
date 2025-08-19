@@ -11,15 +11,26 @@ import torch
 import torch.nn as nn
 from typing import Dict, Any, Optional
 import timm
-from .logging_config import get_logger, log_and_print
+
+# Try to import logging config, fallback to basic logging if not available
+try:
+    from .logging_config import get_logger, log_and_print
+except ImportError:
+    import logging
+    def get_logger(name): return logging.getLogger(name)
+    def log_and_print(msg, logger_instance=None, level="INFO"): print(msg)
 
 
 class SingleChannelViT(nn.Module):
     """
-    Vision Transformer adapted for single-channel (grayscale) input.
+    Vision Transformer/MobileViT adapted for single-channel (grayscale) input.
     
-    This wrapper modifies a standard ViT to accept 1-channel input instead of 3-channel RGB.
+    This wrapper modifies ViT or MobileViT models to accept 1-channel input instead of 3-channel RGB.
     Perfect for QuickDraw doodles which are naturally grayscale.
+    
+    Supports:
+    - ViT models (vit_tiny, vit_small, vit_base)
+    - MobileViT models (mobilevitv2_175, mobilevitv2_200)
     """
     
     def __init__(
@@ -45,12 +56,17 @@ class SingleChannelViT(nn.Module):
             drop_path_rate=drop_path_rate
         )
         
-        # Get the original first layer (patch embedding)
+        # Get the original first layer - different for ViT vs MobileViT
         if hasattr(self.base_model, 'patch_embed'):
             # Standard ViT structure
             original_conv = self.base_model.patch_embed.proj
+            self.model_type = "vit"
+        elif hasattr(self.base_model, 'stem') and hasattr(self.base_model.stem, 'conv'):
+            # MobileViT structure
+            original_conv = self.base_model.stem.conv
+            self.model_type = "mobilevit"
         else:
-            raise ValueError(f"Unknown model structure for {model_name}")
+            raise ValueError(f"Unknown model structure for {model_name}. Expected ViT or MobileViT.")
         
         # Create new first layer that accepts 1 channel
         self.single_channel_conv = nn.Conv2d(
@@ -80,13 +96,20 @@ class SingleChannelViT(nn.Module):
             logger.info("Random initialization for single-channel weights")
             print("   Random initialization for single-channel weights")
         
-        # Replace the original first layer
-        self.base_model.patch_embed.proj = self.single_channel_conv
+        # Replace the original first layer (different path for each model type)
+        if self.model_type == "vit":
+            self.base_model.patch_embed.proj = self.single_channel_conv
+        elif self.model_type == "mobilevit":
+            self.base_model.stem.conv = self.single_channel_conv
         
         # Store model info
         self.model_name = model_name
         self.num_classes = num_classes
-        self.input_size = 224  # Standard ViT input size
+        # Set input size based on model type
+        if self.model_type == "mobilevit":
+            self.input_size = 256  # MobileViT uses 256x256
+        else:
+            self.input_size = 224  # ViT uses 224x224
         
     def forward(self, x):
         """
@@ -142,9 +165,13 @@ def build_model(
     
     # Supported architectures
     supported_archs = [
+        # ViT models
         "vit_tiny_patch16_224",
         "vit_small_patch16_224", 
-        "vit_base_patch16_224"
+        "vit_base_patch16_224",
+        # MobileViT models
+        "mobilevitv2_175",
+        "mobilevitv2_200"
     ]
     
     if arch not in supported_archs:

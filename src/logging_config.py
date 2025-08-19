@@ -1,8 +1,7 @@
 """
-Centralized logging configuration for the QuickDraw MobileViT quantization project.
+Logging configuration for the QuickDraw project.
 
-This module provides a consistent logging setup that can be used across all modules.
-It supports both file and console logging with appropriate formatting.
+Provides consistent logging across all modules with both file and console output.
 """
 
 import logging
@@ -12,100 +11,89 @@ from typing import Optional
 
 
 def setup_logger(
-    name: str = __name__,
-    level: int = logging.INFO,
+    log_level: str = "INFO",
     log_file: Optional[str] = None,
-    console_output: bool = True,
-    file_output: bool = True
+    console_output: bool = True
 ) -> logging.Logger:
     """
-    Set up a logger with consistent formatting and handlers.
+    Setup logging configuration for the project.
     
     Args:
-        name: Logger name (usually __name__ from the calling module)
-        level: Logging level (default: INFO)
-        log_file: Custom log file path. If None, uses 'logs/quickdraw.log'
+        log_level: Logging level (DEBUG, INFO, WARNING, ERROR)
+        log_file: Optional log file path
         console_output: Whether to output to console
-        file_output: Whether to output to file
         
     Returns:
-        Configured logger instance
+        Configured root logger
     """
     
-    # Create logger
-    logger = logging.getLogger(name)
-    
-    # Avoid adding multiple handlers if logger already exists
-    if logger.handlers:
-        return logger
-        
-    logger.setLevel(level)
-    
-    # Create formatter
-    formatter = logging.Formatter(
-        fmt='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-        datefmt='%Y-%m-%d %H:%M:%S'
-    )
-    
-    # Console handler
-    if console_output:
-        console_handler = logging.StreamHandler(sys.stdout)
-        console_handler.setLevel(level)
-        console_handler.setFormatter(formatter)
-        logger.addHandler(console_handler)
-    
-    # File handler
-    if file_output:
-        if log_file is None:
-            log_file = "logs/quickdraw.log"
-        
-        # Create logs directory if it doesn't exist
+    # Create logs directory if needed
+    if log_file:
         log_path = Path(log_file)
         log_path.parent.mkdir(parents=True, exist_ok=True)
-        
-        file_handler = logging.FileHandler(log_file)
-        file_handler.setLevel(level)
-        file_handler.setFormatter(formatter)
-        logger.addHandler(file_handler)
     
-    return logger
+    # Configure root logger
+    logging.basicConfig(
+        level=getattr(logging, log_level.upper()),
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        handlers=[]
+    )
+    
+    root_logger = logging.getLogger()
+    
+    # Clear any existing handlers
+    root_logger.handlers.clear()
+    
+    # Add file handler if specified
+    if log_file:
+        file_handler = logging.FileHandler(log_file)
+        file_handler.setFormatter(
+            logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        )
+        root_logger.addHandler(file_handler)
+    
+    # Add console handler if requested
+    if console_output:
+        console_handler = logging.StreamHandler(sys.stdout)
+        console_handler.setFormatter(
+            logging.Formatter('%(levelname)s - %(name)s - %(message)s')
+        )
+        root_logger.addHandler(console_handler)
+    
+    return root_logger
 
 
-def get_logger(name: str = __name__) -> logging.Logger:
+def get_logger(name: str) -> logging.Logger:
     """
-    Get or create a logger with the standard configuration.
+    Get a logger for a specific module.
     
     Args:
-        name: Logger name (usually __name__ from the calling module)
+        name: Logger name (typically __name__)
         
     Returns:
         Logger instance
     """
-    return setup_logger(name)
+    return logging.getLogger(name)
 
 
-# Default logger for this module
-logger = get_logger(__name__)
-
-
-def log_and_print(message: str, level: int = logging.INFO, logger_instance: Optional[logging.Logger] = None):
+def log_and_print(message: str, logger_instance: Optional[logging.Logger] = None, level: str = "INFO"):
     """
-    Log a message and also print it to screen for user visibility.
-    
-    This function is useful when you want both logging (for debugging/audit trail)
-    and immediate screen output (for user feedback).
+    Log a message and also print it to console.
     
     Args:
         message: Message to log and print
-        level: Logging level
-        logger_instance: Logger to use. If None, uses default logger
+        logger_instance: Optional logger instance
+        level: Log level (INFO, WARNING, ERROR, etc.)
     """
-    if logger_instance is None:
-        logger_instance = logger
-        
-    # Log the message
-    logger_instance.log(level, message)
     
-    # Also print to screen (remove any emoji/icons for clean output)
-    clean_message = message
-    print(clean_message)
+    # Print to console
+    print(message)
+    
+    # Log to file if logger provided
+    if logger_instance:
+        log_func = getattr(logger_instance, level.lower(), logger_instance.info)
+        log_func(message)
+
+
+# Alias for backward compatibility
+setup_logging = setup_logger

@@ -1,60 +1,151 @@
 # Tests
 
-This directory contains the test suite for the QuickDraw MobileViT quantization project.
+This directory contains all tests for the QuickDraw MobileViT project, organized by functionality.
 
-## Structure
+## Test Organization
 
 ```
 tests/
-├── __init__.py              # Tests package
-├── unit/                    # Unit tests
-│   ├── __init__.py
-│   └── test_logging.py     # Logging configuration tests
-├── integration/            # Integration tests (future)
-└── README.md               # This file
+├── run_tests.py            # Main test runner (run this!)
+├── data/                   # Dataset and data pipeline tests
+│   └── test_dataset.py     # Dataset loading, transforms, dataloaders
+├── models/                 # Model architecture tests  
+│   └── test_model.py       # Model creation, forward pass, integration
+├── unit/                   # Unit tests for individual functions
+├── integration/            # End-to-end integration tests
+└── README.md              # This file
 ```
 
 ## Running Tests
 
-### All tests with pytest
+### 🚀 Quick Start (Recommended)
 ```bash
-python -m pytest tests/ -v
+# Run all tests with organized output
+.venv/bin/python tests/run_tests.py
+
+# Run specific category
+.venv/bin/python tests/run_tests.py --category data
+.venv/bin/python tests/run_tests.py --category models
 ```
 
-### Specific test file
+### 🔧 Individual Tests
 ```bash
-python -m pytest tests/unit/test_logging.py -v
-```
+# Data tests (dataset, dataloaders, transforms)
+.venv/bin/python tests/data/test_dataset.py
 
-### Individual test directly
-```bash
-python tests/unit/test_logging.py
+# Model tests (architecture, forward pass, integration)
+.venv/bin/python tests/models/test_model.py
 ```
 
 ## Test Categories
 
-### Unit Tests (`tests/unit/`)
-- Test individual components in isolation
-- Fast execution
-- No external dependencies (mock external services)
+### 📊 Data Tests (`tests/data/`)
+Tests for dataset loading and preprocessing:
+- **Dataset loading** - Parquet files, metadata validation
+- **Transforms** - Image preprocessing, augmentation  
+- **DataLoaders** - Batching, stratified splits
+- **Class filtering** - Subset selection, sampling
 
-### Integration Tests (`tests/integration/`)
-- Test component interactions
-- May require test data or external services
-- Slower execution
+### 🧠 Model Tests (`tests/models/`)
+Tests for model architecture and integration:
+- **Architecture** - Single-channel ViT creation
+- **Weight initialization** - Pretrained vs random weights
+- **Forward pass** - Input/output shapes, value ranges
+- **Dataset integration** - Model + QuickDraw data compatibility
 
-## Writing Tests
+### 🔧 Unit Tests (`tests/unit/`)
+Tests for individual components:
+- Individual function testing
+- Utility function validation
+- Edge case handling
+- No external dependencies
 
-1. Place unit tests in `tests/unit/`
-2. Name test files with `test_` prefix
-3. Use descriptive test method names
-4. Include docstrings for test classes and methods
-5. Follow the AAA pattern: Arrange, Act, Assert
+### 🔗 Integration Tests (`tests/integration/`)  
+End-to-end workflow tests:
+- Complete training pipelines
+- Export and deployment workflows
+- Multi-component interactions
 
-## Test Artifacts
+## Test Data Requirements
 
-Test outputs and artifacts are gitignored but the test files themselves are tracked:
-- `test_*.log` - Test-specific log files
-- `temp_*` - Temporary test files
-- `__pycache__/` - Python cache files
-- Coverage reports and other test outputs
+Tests are designed to work with or without downloaded data:
+
+**With data** (full testing):
+```bash
+# Download test data first
+python scripts/download_quickdraw_direct.py --num-classes 3 --samples-per-class 100
+
+# Then run tests
+.venv/bin/python tests/run_tests.py
+```
+
+**Without data** (partial testing):
+```bash
+# Tests will skip data-dependent portions gracefully
+.venv/bin/python tests/run_tests.py
+```
+
+## Test Design Principles
+
+Our tests follow these principles:
+
+- ✅ **Graceful degradation** - Skip tests when data unavailable
+- ✅ **Clear reporting** - Descriptive output and error messages  
+- ✅ **Fast execution** - Use small datasets for quick feedback
+- ✅ **Self-contained** - Tests don't depend on each other
+- ✅ **Well-organized** - Clear separation by functionality
+- ✅ **Helpful errors** - Show exactly how to fix issues
+
+## Sample Test Output
+
+```
+🧪 QuickDraw MobileViT Test Suite
+==================================================
+
+🧪 Running data tests...
+==================================================
+
+▶️  Running test_dataset...
+✅ test_dataset PASSED
+
+🧪 Running models tests...
+==================================================
+
+▶️  Running test_model...
+✅ test_model PASSED
+
+📊 TEST SUMMARY
+======================================================================
+DATA TESTS:
+  ✅ PASS test_dataset
+
+MODELS TESTS:
+  ✅ PASS test_model
+
+🎯 OVERALL: 2/2 tests passed
+🎉 All tests passed!
+```
+
+## Writing New Tests
+
+1. **Choose the right category**:
+   - `data/` - Dataset, transforms, data loading
+   - `models/` - Model architecture, training, inference
+   - `unit/` - Individual functions, utilities
+   - `integration/` - End-to-end workflows
+
+2. **Follow naming convention**: `test_*.py`
+
+3. **Include clear documentation** with usage examples
+
+4. **Handle missing dependencies** gracefully with helpful messages
+
+5. **Use the test runner** for consistent output formatting
+
+## Adding to CI/CD
+
+The test runner (`tests/run_tests.py`) is designed for automated environments:
+- ✅ Clear exit codes (0 = success, 1 = failure)  
+- ✅ No interactive prompts
+- ✅ Structured output for parsing
+- ✅ Graceful handling of missing data/dependencies

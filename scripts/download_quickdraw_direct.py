@@ -274,9 +274,9 @@ def verify_download(output_dir: str):
             assert class_name in metadata['classes'], f"Invalid class name: {class_name}"
         
         print(f" Verification passed:")
-        print(f"   📊 {len(df):,} samples across {metadata['num_classes']} classes")
-        print(f"   🖼️  Images: 28x28 grayscale PNG format")
-        print(f"   📝 Metadata: consistent labels and class mappings")
+        print(f"   {len(df):,} samples across {metadata['num_classes']} classes")
+        print(f"   Images: 28x28 grayscale PNG format")
+        print(f"   Metadata: consistent labels and class mappings")
         print(f"    File size: {(parquet_file.stat().st_size / (1024*1024)):.1f} MB")
         
     except Exception as e:
