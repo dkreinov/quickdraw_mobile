@@ -144,7 +144,8 @@ def download_and_convert(
     classes: List[str],
     samples_per_class: int,
     output_dir: str = "data/quickdraw_parquet",
-    seed: int = 42
+    seed: int = 42,
+    per_class_files: bool = False
 ):
     """Download QuickDraw data directly from Google and convert to Parquet format."""
     
@@ -192,39 +193,126 @@ def download_and_convert(
     
     log_and_print(f"\nConverting {len(all_samples)} samples to Parquet format...", logger_instance=logger)
     
-    # Create DataFrame
-    df = pd.DataFrame(all_samples)
-    
-    # Save to Parquet
-    parquet_file = output_path / "quickdraw_data.parquet"
-    df.to_parquet(parquet_file, index=False, compression='snappy')
+    if per_class_files:
+        # Save as per-class files
+        log_and_print(f"  Saving as per-class files...", logger_instance=logger)
+        per_class_dir = output_path / "per_class"
+        per_class_dir.mkdir(exist_ok=True)
+        
+        class_stats = {}
+        
+        for class_name in successful_classes:
+            # Filter samples for this class
+            class_samples = [s for s in all_samples if s['class_name'] == class_name]
+            
+            if not class_samples:
+                continue
+            
+            # Create DataFrame and save
+            class_df = pd.DataFrame(class_samples)
+            class_filename = class_name.replace(' ', '_').replace('/', '_').replace('\\', '_')
+            class_file = per_class_dir / f"{class_filename}.parquet"
+            
+            class_df.to_parquet(class_file, index=False, compression='snappy')
+            
+            # Track stats
+            file_size_mb = class_file.stat().st_size / (1024 * 1024)
+            class_stats[class_name] = {
+                'samples': len(class_samples),
+                'file_size_mb': file_size_mb,
+                'filename': class_filename + '.parquet'
+            }
+            
+            log_and_print(f"    {class_name}: {len(class_samples)} samples → {file_size_mb:.1f} MB", logger_instance=logger)
+        
+        # Save per-class metadata
+        per_class_metadata = {
+            'format': 'per_class_parquet',
+            'classes': sorted(successful_classes),
+            'class_to_id': successful_class_to_id,
+            'id_to_class': successful_id_to_class,
+            'num_classes': len(successful_classes),
+            'samples_per_class': samples_per_class,
+            'total_samples': len(all_samples),
+            'seed': seed,
+            'per_class_directory': str(per_class_dir),
+            'class_files': class_stats,
+            'created_with': 'download_quickdraw_direct.py',
+            'source': 'Google QuickDraw Dataset (direct download)'
+        }
+        
+        per_class_metadata_file = per_class_dir / "metadata.json"
+        with open(per_class_metadata_file, 'w') as f:
+            json.dump(per_class_metadata, f, indent=2)
+        
+        total_size_mb = sum(stats['file_size_mb'] for stats in class_stats.values())
+        main_metadata_file = output_path / "metadata.json"
+        
+    else:
+        # Save as monolithic file (original behavior)
+        log_and_print(f"  Saving as monolithic file...", logger_instance=logger)
+        
+        # Create DataFrame
+        df = pd.DataFrame(all_samples)
+        
+        # Save to Parquet
+        parquet_file = output_path / "quickdraw_data.parquet"
+        df.to_parquet(parquet_file, index=False, compression='snappy')
+        
+        total_size_mb = parquet_file.stat().st_size / (1024 * 1024)
+        main_metadata_file = output_path / "metadata.json"
     
     # Update class mappings for successful classes only
     successful_class_to_id = {name: idx for idx, name in enumerate(sorted(successful_classes))}
     successful_id_to_class = {idx: name for name, idx in successful_class_to_id.items()}
     
-    # Save metadata
-    metadata = {
-        'classes': sorted(successful_classes),
-        'class_to_id': successful_class_to_id,
-        'id_to_class': successful_id_to_class,
-        'num_classes': len(successful_classes),
-        'samples_per_class': samples_per_class,
-        'total_samples': len(all_samples),
-        'seed': seed,
-        'parquet_file': str(parquet_file),
-        'created_with': 'download_quickdraw_direct.py',
-        'source': 'Google QuickDraw Dataset (direct download)'
-    }
-    
-    metadata_file = output_path / "metadata.json"
-    with open(metadata_file, 'w') as f:
-        json.dump(metadata, f, indent=2)
+    # Save main metadata (for backward compatibility)
+    if not per_class_files:
+        metadata = {
+            'classes': sorted(successful_classes),
+            'class_to_id': successful_class_to_id,
+            'id_to_class': successful_id_to_class,
+            'num_classes': len(successful_classes),
+            'samples_per_class': samples_per_class,
+            'total_samples': len(all_samples),
+            'seed': seed,
+            'parquet_file': str(parquet_file),
+            'created_with': 'download_quickdraw_direct.py',
+            'source': 'Google QuickDraw Dataset (direct download)'
+        }
+        
+        with open(main_metadata_file, 'w') as f:
+            json.dump(metadata, f, indent=2)
+    else:
+        # For per-class format, save a reference metadata in main directory
+        metadata = {
+            'format': 'per_class_parquet',
+            'classes': sorted(successful_classes),
+            'class_to_id': successful_class_to_id,
+            'id_to_class': successful_id_to_class,
+            'num_classes': len(successful_classes),
+            'samples_per_class': samples_per_class,
+            'total_samples': len(all_samples),
+            'seed': seed,
+            'per_class_directory': str(per_class_dir),
+            'created_with': 'download_quickdraw_direct.py',
+            'source': 'Google QuickDraw Dataset (direct download)'
+        }
+        
+        with open(main_metadata_file, 'w') as f:
+            json.dump(metadata, f, indent=2)
     
     log_and_print(f"\nConversion complete!", logger_instance=logger)
-    log_and_print(f"   Data file: {parquet_file}", logger_instance=logger)
-    log_and_print(f"   Metadata: {metadata_file}", logger_instance=logger)
-    log_and_print(f"   Total size: {parquet_file.stat().st_size / (1024*1024):.1f} MB", logger_instance=logger)
+    if per_class_files:
+        log_and_print(f"   Format: Per-class Parquet files", logger_instance=logger)
+        log_and_print(f"   Data directory: {per_class_dir}", logger_instance=logger)
+        log_and_print(f"   Class files: {len(class_stats)}", logger_instance=logger)
+    else:
+        log_and_print(f"   Format: Monolithic Parquet file", logger_instance=logger)
+        log_and_print(f"   Data file: {parquet_file}", logger_instance=logger)
+    
+    log_and_print(f"   Metadata: {main_metadata_file}", logger_instance=logger)
+    log_and_print(f"   Total size: {total_size_mb:.1f} MB", logger_instance=logger)
     log_and_print(f"   Successfully downloaded: {len(successful_classes)} classes", logger_instance=logger)
     
     if len(successful_classes) < len(classes):
@@ -299,6 +387,8 @@ def main():
     parser.add_argument("--output-dir", default="data/quickdraw_parquet",
                        help="Output directory (default: data/quickdraw_parquet)")
     parser.add_argument("--seed", type=int, default=42, help="Random seed (default: 42)")
+    parser.add_argument("--per-class-files", action="store_true",
+                       help="Save as per-class Parquet files instead of monolithic file")
     parser.add_argument("--list-classes", action="store_true", 
                        help="List all available class names and exit")
     
@@ -335,7 +425,8 @@ def main():
             classes=selected_classes,
             samples_per_class=args.samples_per_class,
             output_dir=args.output_dir,
-            seed=args.seed
+            seed=args.seed,
+            per_class_files=args.per_class_files
         )
         
         # Verify the download integrity
