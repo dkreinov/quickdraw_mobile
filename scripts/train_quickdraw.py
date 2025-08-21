@@ -98,9 +98,8 @@ def main():
     save_dir.mkdir(parents=True, exist_ok=True)
     
     logger = setup_logger(
-        name="train_quickdraw",
-        log_file=save_dir / "training.log",
-        level="INFO"
+        log_file=str(save_dir / "training.log"),
+        log_level="INFO"
     )
     
     log_and_print("=== QuickDraw Vision Model Training ===", logger)
@@ -136,18 +135,19 @@ def main():
         )
         
         log_and_print(f"Dataset created:", logger)
-        log_and_print(f"  Classes: {data_meta.num_classes}", logger)
+        log_and_print(f"  Classes: {data_meta['num_classes']}", logger)
         log_and_print(f"  Training batches: {len(train_loader)}", logger)
         log_and_print(f"  Validation batches: {len(val_loader)}", logger)
-        log_and_print(f"  Image size: {data_meta.image_size}", logger)
-        log_and_print(f"  Class names: {data_meta.label_names[:5]}..." if len(data_meta.label_names) > 5 else f"  Class names: {data_meta.label_names}", logger)
+        log_and_print(f"  Image size: {data_meta['image_size']}", logger)
+        label_names = data_meta['selected_classes']
+        log_and_print(f"  Class names: {label_names[:5]}..." if len(label_names) > 5 else f"  Class names: {label_names}", logger)
         
         # Create model
         use_pretrained = args.pretrained and not args.no_pretrained
         log_and_print(f"\nCreating model: {args.arch} (pretrained: {use_pretrained})", logger)
         model = build_model(
             arch=args.arch,
-            num_classes=data_meta.num_classes,
+            num_classes=data_meta['num_classes'],
             pretrained=use_pretrained
         )
         
@@ -161,6 +161,10 @@ def main():
         log_and_print(f"  Total parameters: {total_params:,}", logger)
         log_and_print(f"  Trainable parameters: {trainable_params:,}", logger)
         log_and_print(f"  Model size: {total_params * 4 / (1024**2):.2f} MB", logger)
+        
+        # Move model to device
+        model = model.to(device)
+        log_and_print(f"  Model moved to device: {device}", logger)
         
         # Create training configuration
         config = TrainingConfig(
@@ -210,8 +214,8 @@ def main():
         results_summary = {
             "experiment": {
                 "model_arch": args.arch,
-                "num_classes": data_meta.num_classes,
-                "class_names": data_meta.label_names,
+                "num_classes": data_meta['num_classes'],
+                "class_names": data_meta['selected_classes'],
                 "image_size": args.image_size,
                 "total_epochs": args.epochs,
                 "batch_size": args.batch_size
@@ -241,7 +245,7 @@ def main():
         log_and_print(f"TRAINING SUMMARY", logger)
         log_and_print(f"="*60, logger)
         log_and_print(f"Model: {args.arch} ({total_params:,} parameters)", logger)
-        log_and_print(f"Dataset: {data_meta.num_classes} classes, {args.image_size}x{args.image_size} images", logger)
+        log_and_print(f"Dataset: {data_meta['num_classes']} classes, {args.image_size}x{args.image_size} images", logger)
         log_and_print(f"Best Validation Accuracy: {trainer.best_val_acc:.2f}%", logger)
         log_and_print(f"Training Time: {total_time/60:.1f} minutes", logger)
         log_and_print(f"Checkpoints: {save_dir}/{model_name}_best.pt", logger)

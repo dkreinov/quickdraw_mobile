@@ -140,8 +140,9 @@ class QuickDrawDataset(Dataset):
             self._load_per_class_data(per_class_dir, max_samples_per_class, seed, logger)
         else:
             # Fall back to monolithic format
-        parquet_file = self.data_dir / "quickdraw_data.parquet"
-        if not parquet_file.exists():
+            log_and_print("Using monolithic Parquet format (fallback)...", logger_instance=logger)
+            parquet_file = self.data_dir / "quickdraw_data.parquet"
+            if not parquet_file.exists():
                 raise FileNotFoundError(
                     f"No data found. Expected either:\n"
                     f"  - Per-class (recommended): {per_class_dir}/\n"

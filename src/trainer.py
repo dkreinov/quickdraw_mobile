@@ -12,7 +12,10 @@ This module provides a comprehensive trainer for QuickDraw vision models with:
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
-from torch.cuda.amp import autocast
+try:
+    from torch.amp import autocast
+except ImportError:
+    from torch.cuda.amp import autocast
 import time
 import json
 from pathlib import Path
@@ -69,21 +72,24 @@ class MetricsTracker:
     def update(self, loss: float, logits: torch.Tensor, targets: torch.Tensor):
         """Update metrics with batch results."""
         batch_size = targets.size(0)
+        num_classes = logits.size(1)
         
         # Loss
         self.total_loss += loss * batch_size
         self.total_samples += batch_size
         
-        # Top-k accuracy
+        # Top-k accuracy (handle case where num_classes < 5)
         with torch.no_grad():
-            _, predicted = logits.topk(5, dim=1, largest=True, sorted=True)
-            targets_expanded = targets.view(-1, 1).expand_as(predicted)
+            # Use min(5, num_classes) to avoid out-of-range error
+            k = min(5, num_classes)
+            _, predicted = logits.topk(k, dim=1, largest=True, sorted=True)
+            targets_expanded = targets.view(-1, 1).expand(-1, k)
             
             # Top-1 accuracy
             self.correct_top1 += predicted[:, 0].eq(targets).sum().item()
             
-            # Top-5 accuracy  
-            self.correct_top5 += predicted.eq(targets_expanded).sum().item()
+            # Top-5 accuracy (or top-k if k < 5)
+            self.correct_top5 += predicted.eq(targets_expanded).any(dim=1).sum().item()
     
     def compute(self) -> Tuple[float, float, float]:
         """Compute average metrics."""
@@ -172,9 +178,16 @@ class QuickDrawTrainer:
             
             # Forward pass with optional mixed precision
             if self.scaler is not None:
-                with autocast(self.config.device.type):
-                    logits = self.model(images)
-                    loss = self.loss_fn(logits, targets)
+                # Use newer autocast API for PyTorch 2.0+
+                try:
+                    with autocast(device_type=self.config.device.type):
+                        logits = self.model(images)
+                        loss = self.loss_fn(logits, targets)
+                except TypeError:
+                    # Fallback to older API
+                    with autocast():
+                        logits = self.model(images)
+                        loss = self.loss_fn(logits, targets)
                 
                 # Backward pass with gradient scaling
                 self.scaler.scale(loss).backward()
@@ -238,9 +251,16 @@ class QuickDrawTrainer:
                 
                 # Forward pass
                 if self.scaler is not None:
-                    with autocast(self.config.device.type):
-                        logits = self.model(images)
-                        loss = self.loss_fn(logits, targets)
+                    # Use newer autocast API for PyTorch 2.0+
+                    try:
+                        with autocast(device_type=self.config.device.type):
+                            logits = self.model(images)
+                            loss = self.loss_fn(logits, targets)
+                    except TypeError:
+                        # Fallback to older API
+                        with autocast():
+                            logits = self.model(images)
+                            loss = self.loss_fn(logits, targets)
                 else:
                     logits = self.model(images)
                     loss = self.loss_fn(logits, targets)
@@ -393,8 +413,10 @@ def test_trainer():
         val_loader = data_utils.DataLoader(dummy_dataset, batch_size=16, shuffle=False)
         
         # Create model
-        import timm
-        model = timm.create_model('vit_tiny_patch16_224', pretrained=False, num_classes=10)
+        from models import build_model
+        model = build_model('vit_tiny_patch16_224', num_classes=10, pretrained=False)
+        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        model = model.to(device)
         
         # Create config for fast testing
         config = TrainingConfig(
@@ -402,7 +424,8 @@ def test_trainer():
             warmup_epochs=0,  # No warmup for testing
             total_epochs=2,   # Short training
             use_amp=False,    # Disable AMP for testing
-            deterministic=False  # Faster testing
+            deterministic=False,  # Faster testing
+            device=device
         )
         
         # Create trainer

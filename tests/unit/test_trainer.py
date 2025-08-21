@@ -17,6 +17,7 @@ import torch.utils.data as data_utils
 import timm
 from trainer import QuickDrawTrainer, MetricsTracker, EpochMetrics, test_trainer
 from train_config import TrainingConfig
+from models import build_model
 
 
 def create_dummy_data(num_samples=50, num_classes=5):
@@ -107,14 +108,17 @@ def test_trainer_creation():
         val_loader = data_utils.DataLoader(dataset, batch_size=4, shuffle=False)
         
         # Create model
-        model = timm.create_model('vit_tiny_patch16_224', pretrained=False, num_classes=5)
+        model = build_model('vit_tiny_patch16_224', num_classes=5, pretrained=False)
+        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        model = model.to(device)
         
         # Create config
         config = TrainingConfig(
             total_epochs=2,
             warmup_epochs=0,
             use_amp=False,
-            deterministic=False
+            deterministic=False,
+            device=device
         )
         
         # Create temporary directory
@@ -162,7 +166,9 @@ def test_single_epoch():
         val_loader = data_utils.DataLoader(dataset, batch_size=8, shuffle=False)
         
         # Create model
-        model = timm.create_model('vit_tiny_patch16_224', pretrained=False, num_classes=3)
+        model = build_model('vit_tiny_patch16_224', num_classes=3, pretrained=False)
+        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        model = model.to(device)
         
         # Create config
         config = TrainingConfig(
@@ -170,7 +176,8 @@ def test_single_epoch():
             total_epochs=1,
             warmup_epochs=0,
             use_amp=False,
-            deterministic=False
+            deterministic=False,
+            device=device
         )
         
         # Create temporary directory
@@ -227,7 +234,9 @@ def test_full_training():
         val_loader = data_utils.DataLoader(dataset, batch_size=8, shuffle=False)
         
         # Create model
-        model = timm.create_model('vit_tiny_patch16_224', pretrained=False, num_classes=4)
+        model = build_model('vit_tiny_patch16_224', num_classes=4, pretrained=False)
+        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        model = model.to(device)
         
         # Create config for short training
         config = TrainingConfig(
@@ -235,7 +244,8 @@ def test_full_training():
             total_epochs=3,
             warmup_epochs=1,
             use_amp=False,
-            deterministic=False
+            deterministic=False,
+            device=device
         )
         
         # Create temporary directory
@@ -293,8 +303,10 @@ def test_checkpoint_loading():
         train_loader = data_utils.DataLoader(dataset, batch_size=8)
         val_loader = data_utils.DataLoader(dataset, batch_size=8)
         
-        model = timm.create_model('vit_tiny_patch16_224', pretrained=False, num_classes=3)
-        config = TrainingConfig(total_epochs=1, use_amp=False, deterministic=False)
+        model = build_model('vit_tiny_patch16_224', num_classes=3, pretrained=False)
+        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        model = model.to(device)
+        config = TrainingConfig(total_epochs=1, use_amp=False, deterministic=False, device=device)
         
         # Create temporary directory
         with tempfile.TemporaryDirectory() as temp_dir:
