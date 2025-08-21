@@ -21,7 +21,9 @@ build/
 
 # Data / results
 data/                     # Downloaded Parquet files (too large for git)
-results/                  # Training outputs (checkpoints, logs, history)
+results/                  # Training outputs and experiments (checkpoints, logs, history)
+!results/experiments/*/experiment_meta.json    # Keep experiment metadata for tracking
+!results/experiments/comparison/               # Keep comparison summaries
 scripts/output/           # Generated sketch visualizations
 
 # Development tests (not committed)
