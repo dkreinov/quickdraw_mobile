@@ -44,6 +44,112 @@ except ImportError:
     def get_logger(name): return logging.getLogger(name)
     def log_and_print(msg, logger_instance=None, level="INFO"): print(msg)
 
+# Memory management imports
+import psutil
+import os
+
+
+# ============================================================================
+# Adaptive Memory Loading System
+# ============================================================================
+
+def get_available_memory() -> int:
+    """Get available system memory in bytes."""
+    return psutil.virtual_memory().available
+
+
+def auto_compute_calib_samples(num_classes: int) -> int:
+    """
+    Auto-compute calibration samples per class based on README guidance.
+    
+    Target: ~2048 total calibration samples, distributed based on class count:
+    - ≤10 classes: 100-200 samples/class
+    - 11-39 classes: 40-80 samples/class  
+    - 40-299 classes: 40-80 samples/class
+    - ≥300 classes: 6-12 samples/class
+    """
+    target_total_calib = 2048
+    calib_per_class = max(8, min(200, target_total_calib // num_classes))
+    
+    if num_classes >= 300:
+        calib_per_class = max(6, min(12, target_total_calib // num_classes))
+    elif num_classes >= 40:
+        calib_per_class = max(40, min(80, target_total_calib // num_classes))
+    elif num_classes <= 10:
+        calib_per_class = max(100, min(200, target_total_calib // num_classes))
+    
+    return calib_per_class
+
+
+def estimate_dataset_memory(
+    num_classes: Optional[int] = None,
+    train_samples_per_class: int = 1000,
+    val_samples_per_class: int = 200,
+    calib_samples_per_class: Optional[int] = None,
+    image_size_bytes: int = 28 * 28 * 1  # 28x28 grayscale
+) -> int:
+    """
+    Estimate memory requirements for a dataset configuration.
+    
+    Args:
+        num_classes: Number of classes to load
+        train_samples_per_class: Training samples per class
+        val_samples_per_class: Validation samples per class  
+        calib_samples_per_class: Calibration samples per class (auto-computed if None)
+        image_size_bytes: Size of each image in bytes
+        
+    Returns:
+        Estimated memory usage in bytes
+    """
+    if num_classes is None:
+        raise ValueError("Must provide num_classes for memory estimation")
+    
+    if calib_samples_per_class is None:
+        calib_samples_per_class = auto_compute_calib_samples(num_classes)
+    
+    total_samples_per_class = train_samples_per_class + val_samples_per_class + calib_samples_per_class
+    total_samples = num_classes * total_samples_per_class
+    
+    # Estimate memory: images + labels + overhead
+    image_memory = total_samples * image_size_bytes
+    label_memory = total_samples * 8  # 8 bytes per label (int64)
+    overhead = int(image_memory * 0.3)  # 30% overhead for PyTorch tensors, indices, etc.
+    
+    return image_memory + label_memory + overhead
+
+
+def should_use_lazy_loading(
+    num_classes: Optional[int] = None,
+    train_samples_per_class: int = 1000,
+    val_samples_per_class: int = 200,
+    calib_samples_per_class: Optional[int] = None,
+    memory_threshold: float = 0.6
+) -> bool:
+    """
+    Decide whether to use lazy loading based on memory requirements.
+    
+    Args:
+        num_classes: Number of classes to load
+        train_samples_per_class: Training samples per class
+        val_samples_per_class: Validation samples per class
+        calib_samples_per_class: Calibration samples per class (auto-computed if None)
+        memory_threshold: Use lazy loading if estimated memory > threshold * available memory
+        
+    Returns:
+        True if should use lazy loading, False for in-memory loading
+    """
+    estimated_memory = estimate_dataset_memory(
+        num_classes=num_classes,
+        train_samples_per_class=train_samples_per_class,
+        val_samples_per_class=val_samples_per_class,
+        calib_samples_per_class=calib_samples_per_class
+    )
+    
+    available_memory = get_available_memory()
+    threshold_memory = available_memory * memory_threshold
+    
+    return estimated_memory > threshold_memory
+
 
 class QuickDrawDataset(Dataset):
     """
@@ -127,7 +233,7 @@ class QuickDrawDataset(Dataset):
         self.image_size = image_size
         self.invert_colors = invert_colors
         self.transforms = self._create_transforms(image_size, augment)
-    
+        
     def _load_data(self, max_samples_per_class: Optional[int], seed: int, logger):
         """Load data using auto-detected format (per-class preferred, monolithic fallback)."""
         
@@ -458,6 +564,70 @@ class QuickDrawDataset(Dataset):
         return len(self.selected_classes)
 
 
+def load_precomputed_split(
+    classes: List[str],
+    train_samples_per_class: int = 1000,
+    val_samples_per_class: int = 200,
+    calib_samples_per_class: int = 200,
+    seed: int = 42,
+    splits_dir: str = "data/splits",
+    include_calibration: bool = False
+) -> Optional[Tuple[List[int], ...]]:
+    """
+    Load pre-computed train/val/calibration split if available.
+    
+    Args:
+        include_calibration: If True, return (train, val, calib), else (train, val)
+    
+    Returns:
+        (train_indices, val_indices) or (train_indices, val_indices, calib_indices) if found, None otherwise
+    """
+    
+    # Try to find split with calibration first
+    classes_str = f"{len(classes)}c"
+    samples_str = f"{train_samples_per_class}+{val_samples_per_class}+{calib_samples_per_class}"
+    filename = f"split_{classes_str}_{samples_str}_seed{seed}.json"
+    split_file = Path(splits_dir) / filename
+    
+    # Fallback to old format without calibration
+    if not split_file.exists():
+        samples_str = f"{train_samples_per_class}+{val_samples_per_class}"
+        filename = f"split_{classes_str}_{samples_str}_seed{seed}.json"
+        split_file = Path(splits_dir) / filename
+    
+    if not split_file.exists():
+        return None
+    
+    try:
+        with open(split_file, 'r') as f:
+            split_config = json.load(f)
+        
+        # Verify the split matches our requirements
+        metadata = split_config['metadata']
+        if (metadata['classes'] == classes and 
+            metadata['train_samples_per_class'] == train_samples_per_class and
+            metadata['val_samples_per_class'] == val_samples_per_class and
+            metadata['seed'] == seed):
+            
+            splits = split_config['splits']
+            train_indices = splits['train_indices']
+            val_indices = splits['val_indices']
+            
+            if include_calibration and 'calib_indices' in splits:
+                calib_indices = splits['calib_indices']
+                return train_indices, val_indices, calib_indices
+            else:
+                return train_indices, val_indices
+        else:
+            logger = get_logger(__name__)
+            logger.warning(f"Pre-computed split found but metadata mismatch: {split_file}")
+            return None
+            
+    except Exception as e:
+        logger = get_logger(__name__)
+        logger.warning(f"Failed to load pre-computed split {split_file}: {e}")
+        return None
+
 def create_stratified_split(
     dataset: QuickDrawDataset,
     train_samples_per_class: int = 4000,
@@ -500,6 +670,211 @@ def create_stratified_split(
         print(f"  {class_name}: {train_end} train, {val_end - train_end} val samples")
     
     return train_indices, val_indices
+
+
+class QuickDrawLazyDataset(Dataset):
+    """
+    Lazy-loading version of QuickDrawDataset for memory efficiency.
+    
+    Loads images on-demand from Parquet files instead of keeping everything in memory.
+    Provides identical interface and results to QuickDrawDataset but with lower memory usage.
+    """
+    
+    def __init__(
+        self,
+        data_dir: str = "data/quickdraw_parquet",
+        classes: Optional[List[str]] = None,
+        max_samples_per_class: Optional[int] = None,
+        transform: Optional[transforms.Compose] = None,
+        seed: int = 42
+    ):
+        self.data_dir = Path(data_dir)
+        self.transform = transform
+        self.seed = seed
+        
+        logger = get_logger(__name__)
+        
+        # Load metadata to get class information
+        metadata_file = self.data_dir / "metadata.json"
+        if not metadata_file.exists():
+            raise FileNotFoundError(f"Metadata file not found: {metadata_file}")
+        
+        with open(metadata_file, 'r') as f:
+            self.metadata = json.load(f)
+        
+        # Select classes
+        if classes is not None:
+            self.selected_classes = sorted(classes)
+        else:
+            self.selected_classes = sorted(self.metadata['classes'])
+        
+        # Validate classes
+        available_classes = set(self.metadata['classes'])
+        for cls in self.selected_classes:
+            if cls not in available_classes:
+                raise ValueError(f"Class '{cls}' not found in dataset. Available: {sorted(available_classes)}")
+        
+        # Create class to index mapping
+        self.class_to_idx = {cls: idx for idx, cls in enumerate(self.selected_classes)}
+        
+        # Load sample indices for each class (but not the actual data)
+        self.class_indices = {}
+        self.sample_metadata = []  # List of (class_name, local_index) tuples
+        
+        # Check if we have per-class files (preferred) or monolithic file
+        per_class_dir = self.data_dir / "per_class"
+        if per_class_dir.exists():
+            self._load_per_class_indices(per_class_dir, max_samples_per_class, logger)
+        else:
+            self._load_monolithic_indices(max_samples_per_class, logger)
+        
+        log_and_print(f"Lazy dataset initialized: {len(self.sample_metadata)} samples from {len(self.selected_classes)} classes", logger_instance=logger)
+    
+    def _load_per_class_indices(self, per_class_dir: Path, max_samples_per_class: Optional[int], logger):
+        """Load sample indices from per-class Parquet files."""
+        
+        # Load per-class metadata
+        with open(per_class_dir / "metadata.json", 'r') as f:
+            per_class_metadata = json.load(f)
+        
+        for class_name in self.selected_classes:
+            if class_name not in per_class_metadata['files']:
+                raise ValueError(f"No per-class file found for class '{class_name}'")
+            
+            # Load just the metadata (not the actual images)
+            class_file = per_class_dir / per_class_metadata['files'][class_name]
+            if not class_file.exists():
+                raise FileNotFoundError(f"Per-class file not found: {class_file}")
+            
+            # Read parquet metadata to get row count
+            if PYARROW_AVAILABLE:
+                parquet_file = pq.ParquetFile(class_file)
+                total_samples = parquet_file.metadata.num_rows
+            else:
+                # Fallback: read just to get length (less efficient)
+                df_meta = pd.read_parquet(class_file, columns=['word'])
+                total_samples = len(df_meta)
+            
+            # Determine how many samples to use
+            if max_samples_per_class is not None:
+                num_samples = min(max_samples_per_class, total_samples)
+            else:
+                num_samples = total_samples
+            
+            # Create indices for this class
+            indices = list(range(num_samples))
+            if num_samples < total_samples:
+                # Sample deterministically
+                random.seed(self.seed + hash(class_name))
+                indices = sorted(random.sample(range(total_samples), num_samples))
+            
+            self.class_indices[class_name] = {
+                'file_path': class_file,
+                'indices': indices,
+                'total_available': total_samples
+            }
+            
+            # Add to global sample metadata
+            for local_idx in indices:
+                self.sample_metadata.append((class_name, local_idx))
+        
+        # Shuffle the global sample order
+        random.seed(self.seed)
+        random.shuffle(self.sample_metadata)
+    
+    def _load_monolithic_indices(self, max_samples_per_class: Optional[int], logger):
+        """Load sample indices from monolithic Parquet file."""
+        
+        parquet_file = self.data_dir / "quickdraw_data.parquet"
+        if not parquet_file.exists():
+            raise FileNotFoundError(f"Monolithic parquet file not found: {parquet_file}")
+        
+        log_and_print("Using monolithic Parquet format for lazy loading (consider splitting for better performance)...", logger_instance=logger)
+        
+        # Load just the class labels to build indices
+        if PYARROW_AVAILABLE:
+            table = pq.read_table(parquet_file, columns=['word'])
+            df_labels = table.to_pandas()
+        else:
+            df_labels = pd.read_parquet(parquet_file, columns=['word'])
+        
+        # Group by class and sample
+        for class_name in self.selected_classes:
+            class_mask = df_labels['word'] == class_name
+            class_indices = df_labels.index[class_mask].tolist()
+            
+            if max_samples_per_class is not None and len(class_indices) > max_samples_per_class:
+                random.seed(self.seed + hash(class_name))
+                class_indices = sorted(random.sample(class_indices, max_samples_per_class))
+            
+            self.class_indices[class_name] = {
+                'file_path': parquet_file,
+                'indices': class_indices,
+                'total_available': len(df_labels[class_mask])
+            }
+            
+            # Add to global sample metadata
+            for global_idx in class_indices:
+                self.sample_metadata.append((class_name, global_idx))
+        
+        # Shuffle the global sample order
+        random.seed(self.seed)
+        random.shuffle(self.sample_metadata)
+    
+    def __len__(self) -> int:
+        return len(self.sample_metadata)
+    
+    def __getitem__(self, idx: int) -> Tuple[torch.Tensor, int]:
+        """Load a single sample on-demand."""
+        class_name, local_idx = self.sample_metadata[idx]
+        
+        # Load the specific sample from the appropriate file
+        file_path = self.class_indices[class_name]['file_path']
+        
+        if str(file_path).endswith('per_class'):
+            # Per-class file: local_idx is the row index within the class file
+            if PYARROW_AVAILABLE:
+                table = pq.read_table(file_path, filters=[('__index_level_0__', '=', local_idx)])
+                if len(table) == 0:
+                    # Fallback: read by row number
+                    table = pq.read_table(file_path)
+                    row_data = table.slice(local_idx, 1).to_pandas().iloc[0]
+                else:
+                    row_data = table.to_pandas().iloc[0]
+            else:
+                df = pd.read_parquet(file_path)
+                row_data = df.iloc[local_idx]
+        else:
+            # Monolithic file: local_idx is the global row index
+            if PYARROW_AVAILABLE:
+                table = pq.read_table(file_path)
+                row_data = table.slice(local_idx, 1).to_pandas().iloc[0]
+            else:
+                df = pd.read_parquet(file_path)
+                row_data = df.iloc[local_idx]
+        
+        # Convert image data
+        image_bytes = row_data['image']
+        image = Image.open(io.BytesIO(image_bytes)).convert('L')  # Ensure grayscale
+        
+        # Apply transforms
+        if self.transform:
+            image = self.transform(image)
+        else:
+            # Default: convert to tensor
+            image = transforms.ToTensor()(image)
+        
+        # Get class label
+        label = self.class_to_idx[class_name]
+        
+        return image, label
+    
+    def get_class_distribution(self) -> Dict[str, int]:
+        """Get the number of samples per class."""
+        distribution = {}
+        for class_name in self.selected_classes:
+            distribution[class_name] = len(self.class_indices[class_name]['indices'])
+        return distribution
 
 
 def create_dataloaders(
@@ -577,9 +952,20 @@ def create_dataloaders(
         seed=seed
     )
     
-    # Create stratified split
+    # Try to load pre-computed split first
     logger = get_logger(__name__)
-    log_and_print("\nCreating stratified train/val split...", logger_instance=logger)
+    log_and_print("\nLoading train/val split...", logger_instance=logger)
+    
+    precomputed_split = load_precomputed_split(
+        train_dataset.selected_classes, train_samples_per_class, val_samples_per_class, seed
+    )
+    
+    if precomputed_split is not None:
+        train_indices, val_indices = precomputed_split
+        log_and_print("Using pre-computed split (fast loading)", logger_instance=logger)
+    else:
+        log_and_print("Pre-computed split not found, computing on-the-fly...", logger_instance=logger)
+        log_and_print("Run 'python scripts/precompute_splits.py' to speed up future runs", logger_instance=logger)
     train_indices, val_indices = create_stratified_split(
         train_dataset, train_samples_per_class, val_samples_per_class, seed
     )
@@ -624,6 +1010,140 @@ def create_dataloaders(
     return train_loader, val_loader, metadata
 
 
+def create_calibration_dataloader(
+    data_dir: str = "data/quickdraw_parquet",
+    classes: Optional[List[str]] = None,
+    num_classes: Optional[int] = None,
+    calib_samples_per_class: Optional[int] = None,
+    train_samples_per_class: int = 1000,
+    val_samples_per_class: int = 200,
+    image_size: int = 224,
+    batch_size: int = 32,
+    num_workers: int = 4,
+    invert_colors: bool = True,
+    seed: int = 42
+) -> Tuple[DataLoader, Dict]:
+    """
+    Create calibration dataloader for quantization using pre-computed splits.
+    
+    Args:
+        calib_samples_per_class: Calibration samples per class
+        Other args: Same as create_dataloaders
+        
+    Returns:
+        calib_loader: Calibration dataloader
+        metadata: Dict with class mappings and info
+    """
+    
+    # Load available classes from metadata
+    metadata_file = Path(data_dir) / "metadata.json"
+    if not metadata_file.exists():
+        raise FileNotFoundError(
+            f"Metadata file not found: {metadata_file}\n"
+            f"Please run: python scripts/download_quickdraw_direct.py"
+        )
+    
+    with open(metadata_file, 'r') as f:
+        data_metadata = json.load(f)
+    
+    available_classes = data_metadata['classes']
+    
+    # Auto-select classes if num_classes is specified
+    if classes is None and num_classes is not None:
+        random.seed(seed)
+        classes = sorted(random.sample(available_classes, min(num_classes, len(available_classes))))
+        logger = get_logger(__name__)
+        log_and_print(f"Auto-selected {num_classes} classes for calibration: {classes}", logger_instance=logger)
+    
+    # Auto-compute calibration samples based on README guidance
+    if calib_samples_per_class is None:
+        actual_num_classes = len(classes) if classes else num_classes
+        # Target 2048 total calibration samples, distributed across classes
+        target_total_calib = 2048
+        calib_samples_per_class = max(8, min(200, target_total_calib // actual_num_classes))
+        
+        # Apply README scaling rules
+        if actual_num_classes >= 300:  # All classes case
+            calib_samples_per_class = max(6, min(12, target_total_calib // actual_num_classes))
+        elif actual_num_classes >= 40:  # Medium class count (40-299)
+            calib_samples_per_class = max(40, min(80, target_total_calib // actual_num_classes))
+        elif actual_num_classes <= 10:  # Small class count
+            calib_samples_per_class = max(100, min(200, target_total_calib // actual_num_classes))
+        
+        logger = get_logger(__name__)
+        log_and_print(f"Auto-computed calibration: {calib_samples_per_class} samples/class ({calib_samples_per_class * actual_num_classes} total)", logger_instance=logger)
+    
+    # Try to load pre-computed split with calibration
+    logger = get_logger(__name__)
+    log_and_print("\nLoading calibration split...", logger_instance=logger)
+    
+    precomputed_split = load_precomputed_split(
+        classes, train_samples_per_class, val_samples_per_class, calib_samples_per_class, 
+        seed, include_calibration=True
+    )
+    
+    if precomputed_split is not None and len(precomputed_split) == 3:
+        train_indices, val_indices, calib_indices = precomputed_split
+        log_and_print("Using pre-computed calibration split (fast loading)", logger_instance=logger)
+        
+        # Create calibration dataset
+        calib_dataset = QuickDrawDataset(
+            data_dir=data_dir,
+            classes=classes,
+            max_samples_per_class=train_samples_per_class + val_samples_per_class + calib_samples_per_class,
+            image_size=image_size,
+            augment=False,  # No augmentation for calibration
+            invert_colors=invert_colors,
+            seed=seed
+        )
+        
+        # Create subset dataset for calibration
+        calib_subset = torch.utils.data.Subset(calib_dataset, calib_indices)
+        
+    else:
+        log_and_print("Pre-computed calibration split not found, using validation data for calibration", logger_instance=logger)
+        log_and_print("Run 'python scripts/precompute_splits.py --main' to generate proper calibration splits", logger_instance=logger)
+        
+        # Fallback: use validation data as calibration
+        _, val_loader, cal_metadata = create_dataloaders(
+            data_dir=data_dir,
+            classes=classes,
+            num_classes=num_classes,
+            train_samples_per_class=train_samples_per_class,
+            val_samples_per_class=val_samples_per_class,
+            image_size=image_size,
+            batch_size=batch_size,
+            num_workers=num_workers,
+            invert_colors=invert_colors,
+            seed=seed
+        )
+        return val_loader, cal_metadata
+    
+    # Create calibration dataloader
+    calib_loader = DataLoader(
+        calib_subset,
+        batch_size=batch_size,
+        shuffle=False,  # Deterministic order for calibration
+        num_workers=num_workers,
+        pin_memory=True
+    )
+    
+    # Create metadata
+    metadata = {
+        'class_to_id': calib_dataset.class_to_id,
+        'id_to_class': calib_dataset.id_to_class,
+        'selected_classes': calib_dataset.selected_classes,
+        'num_classes': calib_dataset.num_classes,
+        'image_size': image_size,
+        'calib_samples': len(calib_indices)
+    }
+    
+    log_and_print(f"\nCalibration dataloader created:", logger_instance=logger)
+    log_and_print(f"  Calibration: {len(calib_loader)} batches ({len(calib_indices)} samples)", logger_instance=logger)
+    
+    return calib_loader, metadata
+
+
 def get_all_class_names(data_dir: str = "data/quickdraw_parquet") -> List[str]:
     """Get list of all available QuickDraw class names from downloaded data."""
     metadata_file = Path(data_dir) / "metadata.json"
@@ -637,3 +1157,173 @@ def get_all_class_names(data_dir: str = "data/quickdraw_parquet") -> List[str]:
         metadata = json.load(f)
     
     return metadata['classes']
+
+
+def create_adaptive_dataloaders(
+    data_dir: str = "data/quickdraw_parquet",
+    classes: Optional[List[str]] = None,
+    num_classes: Optional[int] = None,
+    train_samples_per_class: int = 1000,
+    val_samples_per_class: int = 200,
+    image_size: int = 224,
+    batch_size: int = 64,
+    num_workers: int = 4,
+    invert_colors: bool = True,
+    seed: int = 42,
+    memory_threshold: float = 0.6,
+    force_loading_method: Optional[str] = None
+) -> Tuple[DataLoader, DataLoader, Dict]:
+    """
+    Create train and validation dataloaders with adaptive memory management.
+    
+    Automatically chooses between in-memory and lazy loading based on:
+    - Estimated dataset memory requirements
+    - Available system memory
+    - User-specified threshold
+    
+    Args:
+        data_dir: Directory containing QuickDraw Parquet files
+        classes: List of class names to include (None = auto-select)
+        num_classes: Number of classes to auto-select (ignored if classes provided)
+        train_samples_per_class: Training samples per class
+        val_samples_per_class: Validation samples per class
+        image_size: Target image size for transforms
+        batch_size: Batch size for dataloaders
+        num_workers: Number of worker processes
+        invert_colors: Whether to invert colors (white on black -> black on white)
+        seed: Random seed for reproducibility
+        memory_threshold: Use lazy loading if estimated memory > threshold * available memory
+        force_loading_method: Force 'in_memory' or 'lazy' (None = auto-decide)
+        
+    Returns:
+        Tuple of (train_loader, val_loader, metadata)
+        
+    Note:
+        Both loading methods provide identical results for the same parameters.
+        The choice only affects memory usage and loading performance.
+    """
+    logger = get_logger(__name__)
+    
+    # Determine classes to use
+    if classes is None and num_classes is not None:
+        available_classes = get_all_class_names(data_dir)
+        random.seed(seed)
+        classes = sorted(random.sample(available_classes, min(num_classes, len(available_classes))))
+        log_and_print(f"Auto-selected {num_classes} classes: {classes[:3]}{'...' if len(classes) > 3 else ''}", logger_instance=logger)
+    elif classes is not None:
+        classes = sorted(classes)
+    else:
+        raise ValueError("Must provide either 'classes' or 'num_classes'")
+    
+    actual_num_classes = len(classes)
+    
+    # Decide loading method
+    if force_loading_method:
+        use_lazy = (force_loading_method.lower() == 'lazy')
+        method_reason = f"forced to {force_loading_method}"
+    else:
+        use_lazy = should_use_lazy_loading(
+            num_classes=actual_num_classes,
+            train_samples_per_class=train_samples_per_class,
+            val_samples_per_class=val_samples_per_class,
+            memory_threshold=memory_threshold
+        )
+        
+        estimated_mb = estimate_dataset_memory(
+            num_classes=actual_num_classes,
+            train_samples_per_class=train_samples_per_class,
+            val_samples_per_class=val_samples_per_class
+        ) / (1024 * 1024)
+        
+        available_gb = get_available_memory() / (1024 * 1024 * 1024)
+        method_reason = f"estimated {estimated_mb:.1f}MB vs {available_gb:.1f}GB available"
+    
+    loading_method = "lazy" if use_lazy else "in-memory"
+    log_and_print(f"Using {loading_method} loading ({method_reason})", logger_instance=logger)
+    
+    # Create datasets
+    total_samples_per_class = train_samples_per_class + val_samples_per_class
+    
+    if use_lazy:
+        # Create transforms for lazy dataset
+        transform_list = [
+            transforms.Resize((image_size, image_size)),
+            transforms.ToTensor()
+        ]
+        
+        if invert_colors:
+            transform_list.append(transforms.Lambda(lambda x: 1.0 - x))
+        
+        transform = transforms.Compose(transform_list)
+        
+        # Use lazy loading dataset
+        dataset = QuickDrawLazyDataset(
+            data_dir=data_dir,
+            classes=classes,
+            max_samples_per_class=total_samples_per_class,
+            transform=transform,
+            seed=seed
+        )
+    else:
+        # Use in-memory dataset (uses built-in transform parameters)
+        dataset = QuickDrawDataset(
+            data_dir=data_dir,
+            classes=classes,
+            max_samples_per_class=total_samples_per_class,
+            image_size=image_size,
+            augment=False,  # No augmentation for validation
+            invert_colors=invert_colors,
+            seed=seed
+        )
+    
+    # Create stratified train/val split
+    train_indices, val_indices = create_stratified_split(
+        dataset, train_samples_per_class, val_samples_per_class, seed
+    )
+    
+    # Create subset datasets
+    from torch.utils.data import Subset
+    train_dataset = Subset(dataset, train_indices)
+    val_dataset = Subset(dataset, val_indices)
+    
+    # Create dataloaders
+    train_loader = DataLoader(
+        train_dataset,
+        batch_size=batch_size,
+        shuffle=True,
+        num_workers=num_workers,
+        pin_memory=torch.cuda.is_available()
+    )
+    
+    val_loader = DataLoader(
+        val_dataset,
+        batch_size=batch_size,
+        shuffle=False,
+        num_workers=num_workers,
+        pin_memory=torch.cuda.is_available()
+    )
+    
+    # Create metadata
+    metadata = {
+        'class_to_id': dataset.class_to_idx,
+        'id_to_class': {v: k for k, v in dataset.class_to_idx.items()},
+        'selected_classes': classes,
+        'num_classes': actual_num_classes,
+        'image_size': image_size,
+        'loading_method': loading_method,
+        'train_samples': len(train_indices),
+        'val_samples': len(val_indices),
+        'estimated_memory_mb': estimate_dataset_memory(
+            num_classes=actual_num_classes,
+            train_samples_per_class=train_samples_per_class,
+            val_samples_per_class=val_samples_per_class
+        ) / (1024 * 1024)
+    }
+    
+    log_and_print(f"\nAdaptive dataloaders created:", logger_instance=logger)
+    log_and_print(f"  Method: {loading_method}", logger_instance=logger)
+    log_and_print(f"  Classes: {actual_num_classes}", logger_instance=logger)
+    log_and_print(f"  Train: {len(train_loader)} batches ({len(train_indices)} samples)", logger_instance=logger)
+    log_and_print(f"  Val: {len(val_loader)} batches ({len(val_indices)} samples)", logger_instance=logger)
+    
+    return train_loader, val_loader, metadata

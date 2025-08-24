@@ -15,6 +15,7 @@ seaborn>=0.12.0
 pillow>=10.3.0
 pandas>=2.0.0
 tqdm>=4.64.0
+psutil>=5.9.0
 
 # Quantization (desktop analysis; added later in steps)
 # awq  # (install when doing AWQ step; pinned in README at that time)
