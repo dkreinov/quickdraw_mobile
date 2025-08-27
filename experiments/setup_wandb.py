@@ -7,7 +7,7 @@ import os
 import wandb
 
 # Set API key
-os.environ["WANDB_API_KEY"] = "68e59e19727c439501ba94fced5c65bab307109d"
+# WANDB_API_KEY should be set as environment variable or in ~/.netrc
 
 # Login to W&B
 try:

@@ -23,7 +23,7 @@ from trainer import QuickDrawTrainer
 from logging_config import setup_logger, log_and_print
 
 # Set W&B API key
-os.environ["WANDB_API_KEY"] = "68e59e19727c439501ba94fced5c65bab307109d"
+# WANDB_API_KEY should be set as environment variable or in ~/.netrc
 
 def train_with_wandb():
     """Training function for W&B sweep."""
