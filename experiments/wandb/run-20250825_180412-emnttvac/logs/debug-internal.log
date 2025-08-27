@@ -1,0 +1,12 @@
+{"time":"2025-08-25T18:04:12.896434027+03:00","level":"INFO","msg":"stream: starting","core version":"0.21.1"}
+{"time":"2025-08-25T18:04:13.209942836+03:00","level":"INFO","msg":"stream: created new stream","id":"emnttvac"}
+{"time":"2025-08-25T18:04:13.20998748+03:00","level":"INFO","msg":"stream: started","id":"emnttvac"}
+{"time":"2025-08-25T18:04:13.209996388+03:00","level":"INFO","msg":"handler: started","stream_id":"emnttvac"}
+{"time":"2025-08-25T18:04:13.210011176+03:00","level":"INFO","msg":"writer: started","stream_id":"emnttvac"}
+{"time":"2025-08-25T18:04:13.210004446+03:00","level":"INFO","msg":"sender: started","stream_id":"emnttvac"}
+{"time":"2025-08-25T18:09:42.812188401+03:00","level":"INFO","msg":"fileTransfer: Close: file transfer manager closed"}
+{"time":"2025-08-25T18:09:43.037276147+03:00","level":"INFO","msg":"handler: operation stats","stats":{}}
+{"time":"2025-08-25T18:09:43.041702647+03:00","level":"INFO","msg":"stream: closing","id":"emnttvac"}
+{"time":"2025-08-25T18:09:43.041721419+03:00","level":"INFO","msg":"handler: closed","stream_id":"emnttvac"}
+{"time":"2025-08-25T18:09:43.041798831+03:00","level":"INFO","msg":"sender: closed","stream_id":"emnttvac"}
+{"time":"2025-08-25T18:09:43.041807752+03:00","level":"INFO","msg":"stream: closed","id":"emnttvac"}

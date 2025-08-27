@@ -1,0 +1,9 @@
+=== W&B Sweep Run: LR=0.002241 ===
+Using device: cuda
+Training failed: local variable 'Path' referenced before assignment
+Traceback (most recent call last):
+  File "/localdrive/users/dkreinov/quickdraw-mobilevit-quant/experiments/wandb_lr_sweep.py", line 70, in train_with_wandb
+    train_loader, val_loader, data_meta = create_dataloaders(
+  File "/localdrive/users/dkreinov/quickdraw-mobilevit-quant/src/data.py", line 915, in create_dataloaders
+    metadata_file = Path(data_dir) / "metadata.json"
+UnboundLocalError: local variable 'Path' referenced before assignment

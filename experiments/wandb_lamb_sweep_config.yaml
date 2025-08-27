@@ -1,0 +1,33 @@
+program: wandb_lamb_sweep.py
+project: quickdraw-lr-sweep  # Your existing project
+method: bayes  # Bayesian optimization for efficient search
+metric:
+  name: objective
+  goal: maximize
+
+parameters:
+  learning_rate:
+    distribution: log_uniform_values
+    min: 0.0001    # Lower bound based on your baseline
+    max: 0.001     # LAMB typically uses lower LRs than AdamW
+  
+  weight_decay:
+    distribution: uniform
+    min: 0.01      # Lower than current 0.05
+    max: 0.15      # Higher range for better regularization
+  
+  warmup_epochs:
+    values: [2, 3, 5]  # Test different warmup schedules
+
+# Efficient early termination with baseline threshold
+early_terminate:
+  type: hyperband
+  min_iter: 10    # Give LAMB time to show its potential
+  max_iter: 30    # Full training for best runs
+  s: 2
+  eta: 3
+
+# Baseline-aware early stopping will be handled in Python code
+
+# Run configuration  
+count: 25         # Total runs (efficient for Bayesian optimization)

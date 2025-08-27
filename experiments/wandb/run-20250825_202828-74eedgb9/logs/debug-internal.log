@@ -1,0 +1,13 @@
+{"time":"2025-08-25T20:28:28.230663176+03:00","level":"INFO","msg":"stream: starting","core version":"0.21.1"}
+{"time":"2025-08-25T20:28:28.560377247+03:00","level":"INFO","msg":"stream: created new stream","id":"74eedgb9"}
+{"time":"2025-08-25T20:28:28.560414191+03:00","level":"INFO","msg":"stream: started","id":"74eedgb9"}
+{"time":"2025-08-25T20:28:28.560427617+03:00","level":"INFO","msg":"writer: started","stream_id":"74eedgb9"}
+{"time":"2025-08-25T20:28:28.56043646+03:00","level":"INFO","msg":"sender: started","stream_id":"74eedgb9"}
+{"time":"2025-08-25T20:28:28.560524416+03:00","level":"INFO","msg":"handler: started","stream_id":"74eedgb9"}
+{"time":"2025-08-25T20:30:59.1270826+03:00","level":"INFO","msg":"api: retrying error","error":"Post \"https://api.wandb.ai/graphql\": net/http: request canceled (Client.Timeout exceeded while awaiting headers)"}
+{"time":"2025-08-25T20:33:54.848236035+03:00","level":"INFO","msg":"handler: operation stats","stats":{"operations":[{"desc":"uploading output.log","runtime_seconds":0.765363841,"progress":"17.1KB/17.1KB"},{"desc":"uploading config.yaml","runtime_seconds":0.259805624,"progress":"2.8KB/2.8KB"}],"total_operations":2}}
+{"time":"2025-08-25T20:33:55.102137959+03:00","level":"INFO","msg":"fileTransfer: Close: file transfer manager closed"}
+{"time":"2025-08-25T20:33:55.344398751+03:00","level":"INFO","msg":"stream: closing","id":"74eedgb9"}
+{"time":"2025-08-25T20:33:55.344427932+03:00","level":"INFO","msg":"handler: closed","stream_id":"74eedgb9"}
+{"time":"2025-08-25T20:33:55.344512112+03:00","level":"INFO","msg":"sender: closed","stream_id":"74eedgb9"}
+{"time":"2025-08-25T20:33:55.344538099+03:00","level":"INFO","msg":"stream: closed","id":"74eedgb9"}

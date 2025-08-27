@@ -1,0 +1,14 @@
+EXPERIMENT COMPARISON SUMMARY
+============================================================
+
+Experiment                Best Val   Epoch  Final Val  Final Gap 
+------------------------------------------------------------
+vit_tiny_patch16_224_10classes 14.20      5      14.20      -2.66     
+vit_tiny_patch16_224_3classes 33.33      1      33.33      0.69      
+exp2_stronger_augmentation 55.93      17     55.71      23.51     
+fp32_baseline_50c_main    68.58      27     68.15      19.70     
+
+============================================================
+BASELINE COMPARISON:
+- Original baseline (epoch 20): 62.50% val, 19.64% gap
+- Target: >65% val accuracy, <15% gap

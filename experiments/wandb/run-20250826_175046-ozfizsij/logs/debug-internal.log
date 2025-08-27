@@ -1,0 +1,11 @@
+{"time":"2025-08-26T17:50:46.438290486+03:00","level":"INFO","msg":"stream: starting","core version":"0.21.1"}
+{"time":"2025-08-26T17:50:46.767590266+03:00","level":"INFO","msg":"stream: created new stream","id":"ozfizsij"}
+{"time":"2025-08-26T17:50:46.767635496+03:00","level":"INFO","msg":"stream: started","id":"ozfizsij"}
+{"time":"2025-08-26T17:50:46.767649226+03:00","level":"INFO","msg":"writer: started","stream_id":"ozfizsij"}
+{"time":"2025-08-26T17:50:46.767649586+03:00","level":"INFO","msg":"handler: started","stream_id":"ozfizsij"}
+{"time":"2025-08-26T17:50:46.767725018+03:00","level":"INFO","msg":"sender: started","stream_id":"ozfizsij"}
+{"time":"2025-08-26T17:56:28.368767665+03:00","level":"INFO","msg":"stream: closing","id":"ozfizsij"}
+{"time":"2025-08-26T17:56:28.99722132+03:00","level":"INFO","msg":"fileTransfer: Close: file transfer manager closed"}
+{"time":"2025-08-26T17:56:29.227805526+03:00","level":"INFO","msg":"handler: closed","stream_id":"ozfizsij"}
+{"time":"2025-08-26T17:56:29.227954206+03:00","level":"INFO","msg":"sender: closed","stream_id":"ozfizsij"}
+{"time":"2025-08-26T17:56:29.227996282+03:00","level":"INFO","msg":"stream: closed","id":"ozfizsij"}

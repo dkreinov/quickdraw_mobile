@@ -1,0 +1,29 @@
+2025-08-25 21:50:03,720 INFO    MainThread:2879185 [wandb_setup.py:_flush():80] Current SDK version is 0.21.1
+2025-08-25 21:50:03,720 INFO    MainThread:2879185 [wandb_setup.py:_flush():80] Configure stats pid to 2879185
+2025-08-25 21:50:03,720 INFO    MainThread:2879185 [wandb_setup.py:_flush():80] Loading settings from /homes/dkreinov/.config/wandb/settings
+2025-08-25 21:50:03,720 INFO    MainThread:2879185 [wandb_setup.py:_flush():80] Loading settings from /localdrive/users/dkreinov/quickdraw-mobilevit-quant/experiments/wandb/settings
+2025-08-25 21:50:03,720 INFO    MainThread:2879185 [wandb_setup.py:_flush():80] Loading settings from environment variables
+2025-08-25 21:50:03,720 INFO    MainThread:2879185 [wandb_init.py:setup_run_log_directory():703] Logging user logs to /localdrive/users/dkreinov/quickdraw-mobilevit-quant/experiments/wandb/run-20250825_215003-sy8lximp/logs/debug.log
+2025-08-25 21:50:03,720 INFO    MainThread:2879185 [wandb_init.py:setup_run_log_directory():704] Logging internal logs to /localdrive/users/dkreinov/quickdraw-mobilevit-quant/experiments/wandb/run-20250825_215003-sy8lximp/logs/debug-internal.log
+2025-08-25 21:50:03,720 INFO    MainThread:2879185 [wandb_init.py:init():830] calling init triggers
+2025-08-25 21:50:03,720 INFO    MainThread:2879185 [wandb_init.py:init():835] wandb.init called with sweep_config: {'learning_rate': 0.00010314976426815949}
+config: {'_wandb': {}}
+2025-08-25 21:50:03,720 INFO    MainThread:2879185 [wandb_init.py:init():871] starting backend
+2025-08-25 21:50:03,932 INFO    MainThread:2879185 [wandb_init.py:init():874] sending inform_init request
+2025-08-25 21:50:03,936 INFO    MainThread:2879185 [wandb_init.py:init():882] backend started and connected
+2025-08-25 21:50:03,937 INFO    MainThread:2879185 [wandb_run.py:_config_callback():1380] config_cb None None {'learning_rate': 0.00010314976426815949}
+2025-08-25 21:50:03,938 INFO    MainThread:2879185 [wandb_init.py:init():953] updated telemetry
+2025-08-25 21:50:03,951 INFO    MainThread:2879185 [wandb_init.py:init():977] communicating run to backend with 90.0 second timeout
+2025-08-25 21:50:04,501 INFO    MainThread:2879185 [wandb_init.py:init():1029] starting run threads in backend
+2025-08-25 21:50:04,811 INFO    MainThread:2879185 [wandb_run.py:_console_start():2494] atexit reg
+2025-08-25 21:50:04,811 INFO    MainThread:2879185 [wandb_run.py:_redirect():2342] redirect: wrap_raw
+2025-08-25 21:50:04,811 INFO    MainThread:2879185 [wandb_run.py:_redirect():2411] Wrapping output streams.
+2025-08-25 21:50:04,812 INFO    MainThread:2879185 [wandb_run.py:_redirect():2434] Redirects installed.
+2025-08-25 21:50:04,814 INFO    MainThread:2879185 [wandb_init.py:init():1075] run started, returning control to user process
+2025-08-25 21:55:34,482 INFO    MainThread:2879185 [wandb_run.py:_finish():2260] finishing run kredennis-mobileye/quickdraw-lr-sweep/sy8lximp
+2025-08-25 21:55:34,483 INFO    MainThread:2879185 [wandb_run.py:_atexit_cleanup():2459] got exitcode: 0
+2025-08-25 21:55:34,483 INFO    MainThread:2879185 [wandb_run.py:_restore():2441] restore
+2025-08-25 21:55:34,483 INFO    MainThread:2879185 [wandb_run.py:_restore():2447] restore done
+2025-08-25 21:55:35,516 INFO    MainThread:2879185 [wandb_run.py:_footer_history_summary_info():3895] rendering history
+2025-08-25 21:55:35,517 INFO    MainThread:2879185 [wandb_run.py:_footer_history_summary_info():3927] rendering summary
+2025-08-25 21:55:35,518 INFO    MainThread:2879185 [wandb_run.py:_footer_sync_info():3856] logging synced files

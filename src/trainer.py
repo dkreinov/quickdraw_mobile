@@ -137,7 +137,13 @@ class QuickDrawTrainer:
         self.save_dir.mkdir(parents=True, exist_ok=True)
         
         # Setup training components
-        self.optimizer = self.config.create_optimizer(self.model)
+        # Calculate effective batch size for multi-GPU setups
+        effective_batch_size = train_loader.batch_size
+        if hasattr(self.model, 'module'):  # DataParallel wrapped
+            import torch
+            effective_batch_size *= torch.cuda.device_count()
+        
+        self.optimizer = self.config.create_optimizer(self.model, effective_batch_size)
         self.scheduler = self.config.create_scheduler(self.optimizer, len(self.train_loader))
         self.loss_fn = self.config.create_loss_function()
         self.scaler = self.config.create_scaler()
@@ -213,8 +219,9 @@ class QuickDrawTrainer:
                 # Optimizer step
                 self.optimizer.step()
             
-            # Update learning rate
-            self.scheduler.step()
+            # Update learning rate if using step-based schedule
+            if getattr(self.config, 'schedule_time_unit', 'step') == 'step':
+                self.scheduler.step()
             
             # Update metrics
             metrics.update(loss.item(), logits, targets)
@@ -346,6 +353,10 @@ class QuickDrawTrainer:
             # Validation phase
             log_and_print("Validating...", self.logger)
             val_loss, val_top1, val_top5 = self.validate_epoch()
+
+            # Update learning rate if using epoch-based schedule
+            if getattr(self.config, 'schedule_time_unit', 'step') == 'epoch':
+                self.scheduler.step()
             
             # Compute epoch time
             epoch_time = time.time() - epoch_start

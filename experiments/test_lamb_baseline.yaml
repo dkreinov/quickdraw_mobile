@@ -1,0 +1,22 @@
+program: wandb_lamb_sweep.py
+project: quickdraw-lamb-optimization
+method: grid  # Use grid to guarantee exact parameters
+metric:
+  name: objective
+  goal: maximize
+
+parameters:
+  learning_rate:
+    value: 0.0003  # Exact baseline
+  
+  weight_decay:
+    value: 0.05    # Exact baseline
+  
+  warmup_epochs:
+    value: 2       # Exact baseline (default from successful run)
+  
+  label_smoothing:
+    value: 0.1     # Exact baseline
+
+# No early termination for baseline test
+count: 1  # Single run to test baseline reproduction

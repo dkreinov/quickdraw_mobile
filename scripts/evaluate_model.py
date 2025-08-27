@@ -404,7 +404,7 @@ def main():
         logger.info(f"    - {file_path.name}")
     logger.info(f"  experiment_meta.json")
     
-    logger.info("\nEvaluation completed successfully! 🎉")
+    logger.info("\nEvaluation completed successfully!")
     return 0
 
 if __name__ == "__main__":

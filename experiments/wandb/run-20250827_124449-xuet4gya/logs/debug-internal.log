@@ -1,0 +1,6 @@
+{"time":"2025-08-27T12:44:49.271151694+03:00","level":"INFO","msg":"stream: starting","core version":"0.21.1"}
+{"time":"2025-08-27T12:44:49.60437737+03:00","level":"INFO","msg":"stream: created new stream","id":"xuet4gya"}
+{"time":"2025-08-27T12:44:49.604446265+03:00","level":"INFO","msg":"stream: started","id":"xuet4gya"}
+{"time":"2025-08-27T12:44:49.604503588+03:00","level":"INFO","msg":"writer: started","stream_id":"xuet4gya"}
+{"time":"2025-08-27T12:44:49.60450714+03:00","level":"INFO","msg":"handler: started","stream_id":"xuet4gya"}
+{"time":"2025-08-27T12:44:49.604610405+03:00","level":"INFO","msg":"sender: started","stream_id":"xuet4gya"}

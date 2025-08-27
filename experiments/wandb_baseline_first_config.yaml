@@ -1,0 +1,34 @@
+program: wandb_lamb_sweep.py
+project: quickdraw-lamb-optimization  # New project for LAMB experiments
+method: grid  # Grid ensures we run baseline FIRST
+metric:
+  name: objective
+  goal: maximize
+
+parameters:
+  learning_rate:
+    value: 0.0003  # Fixed to your proven LR
+  
+  # FIRST: Run exact baseline to verify LAMB works
+  weight_decay:
+    values: [0.05, 0.001, 0.01, 0.02, 0.08, 0.1, 0.15, 0.2]  # Baseline FIRST
+  
+  warmup_epochs:
+    values: [3, 1, 2, 4, 5, 7]  # Baseline FIRST
+  
+  # Keep batch size fixed to reproduce baseline
+  # batch_size: 1024 (fixed in Python code)
+  
+  label_smoothing:
+    values: [0.1, 0.05, 0.07, 0.12, 0.15, 0.18, 0.2]  # Baseline FIRST
+
+# More lenient early termination
+early_terminate:
+  type: hyperband
+  min_iter: 8     # Shorter minimum 
+  max_iter: 30    # Full training for best runs
+  s: 2
+  eta: 3
+
+# Run configuration - limit to prevent explosion
+count: 8         # Just test a few key combinations first

@@ -1,0 +1,16 @@
+program: wandb_lr_sweep.py
+method: bayes  # Bayesian optimization for efficient search
+metric:
+  name: objective
+  goal: maximize
+parameters:
+  learning_rate:
+    distribution: log_uniform_values
+    min: 0.0001
+    max: 0.01
+early_terminate:
+  type: hyperband
+  min_iter: 3
+  max_iter: 10
+  s: 2
+  eta: 3

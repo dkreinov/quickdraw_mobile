@@ -1,0 +1,39 @@
+program: wandb_lamb_sweep.py
+project: quickdraw-lamb-optimization  # New project for LAMB experiments
+method: bayes  # Bayesian optimization for efficient search
+metric:
+  name: objective
+  goal: maximize
+
+parameters:
+  learning_rate:
+    distribution: log_uniform_values
+    min: 0.0001    # Lower bound - LAMB can use lower LRs
+    max: 0.001     # Upper bound - your successful 0.0003 is in this range
+  
+  weight_decay:
+    distribution: uniform
+    min: 0.01      # Lower range for exploration
+    max: 0.15      # Higher range - your successful 0.05 is in this range
+  
+  warmup_epochs:
+    values: [1, 2, 3, 4, 5, 7]  # Include your successful warmup=2
+  
+  # Keep batch size fixed to reproduce baseline
+  # batch_size: 1024 (fixed in Python code)
+  
+  label_smoothing:
+    distribution: uniform
+    min: 0.05      # Lower range for exploration  
+    max: 0.2       # Higher range - your successful 0.1 is in this range
+
+# More lenient early termination
+early_terminate:
+  type: hyperband
+  min_iter: 8     # Shorter minimum 
+  max_iter: 30    # Full training for best runs
+  s: 2
+  eta: 3
+
+# Run configuration  
+count: 30         # Comprehensive search across all parameters

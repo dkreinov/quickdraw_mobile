@@ -1,0 +1,12 @@
+{"time":"2025-08-26T08:54:59.562660629+03:00","level":"INFO","msg":"stream: starting","core version":"0.21.1"}
+{"time":"2025-08-26T08:54:59.885136092+03:00","level":"INFO","msg":"stream: created new stream","id":"htk1suhe"}
+{"time":"2025-08-26T08:54:59.885178792+03:00","level":"INFO","msg":"stream: started","id":"htk1suhe"}
+{"time":"2025-08-26T08:54:59.885183495+03:00","level":"INFO","msg":"handler: started","stream_id":"htk1suhe"}
+{"time":"2025-08-26T08:54:59.885195056+03:00","level":"INFO","msg":"sender: started","stream_id":"htk1suhe"}
+{"time":"2025-08-26T08:54:59.885217914+03:00","level":"INFO","msg":"writer: started","stream_id":"htk1suhe"}
+{"time":"2025-08-26T09:00:29.023267858+03:00","level":"INFO","msg":"fileTransfer: Close: file transfer manager closed"}
+{"time":"2025-08-26T09:00:29.288191955+03:00","level":"INFO","msg":"handler: operation stats","stats":{"operations":[{"desc":"uploading history steps 9-11, summary, console lines 341-348","runtime_seconds":0.26478733}],"total_operations":1}}
+{"time":"2025-08-26T09:00:29.313753526+03:00","level":"INFO","msg":"stream: closing","id":"htk1suhe"}
+{"time":"2025-08-26T09:00:29.313807609+03:00","level":"INFO","msg":"handler: closed","stream_id":"htk1suhe"}
+{"time":"2025-08-26T09:00:29.313877383+03:00","level":"INFO","msg":"sender: closed","stream_id":"htk1suhe"}
+{"time":"2025-08-26T09:00:29.313893681+03:00","level":"INFO","msg":"stream: closed","id":"htk1suhe"}

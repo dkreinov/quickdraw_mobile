@@ -1,0 +1,11 @@
+=== W&B Sweep Run: LR=0.008678 ===
+Using device: cuda
+Training failed: Metadata file not found: data/quickdraw_parquet/metadata.json
+Please run: python scripts/download_quickdraw.py --num-classes 10 --samples-per-class 1000
+Traceback (most recent call last):
+  File "/localdrive/users/dkreinov/quickdraw-mobilevit-quant/experiments/wandb_lr_sweep.py", line 70, in train_with_wandb
+    train_loader, val_loader, data_meta = create_dataloaders(
+  File "/localdrive/users/dkreinov/quickdraw-mobilevit-quant/src/data.py", line 916, in create_dataloaders
+    raise FileNotFoundError(
+FileNotFoundError: Metadata file not found: data/quickdraw_parquet/metadata.json
+Please run: python scripts/download_quickdraw.py --num-classes 10 --samples-per-class 1000

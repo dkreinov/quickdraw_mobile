@@ -1,0 +1,10 @@
+wandb_version: 1
+
+label_smoothing:
+  value: 0.06813174441584255
+learning_rate:
+  value: 0.0003
+warmup_epochs:
+  value: 4
+weight_decay:
+  value: 0.17875911151327836

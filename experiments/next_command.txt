@@ -1,0 +1,25 @@
+# Ready command for Experiment 2B: Stronger Augmentation + Multi-GPU
+
+# Environment setup:
+bash
+source .venv/bin/activate
+module load nvidia/cuda/12.1
+
+# Command:
+python scripts/train_quickdraw.py \
+  --classes 50 \
+  --epochs 20 \
+  --per-class-train 1000 \
+  --per-class-val 200 \
+  --batch-size 512 \
+  --lr 0.0012 \
+  --no-pretrained \
+  --arch vit_tiny_patch16_224 \
+  --warmup-epochs 3 \
+  --seed 42 \
+  --experiment-name exp2B_stronger_augmentation_multigpu
+
+# Expected results:
+# - Should match exp2A accuracy (same augmentation)
+# - Should complete in ~3-4 minutes (vs ~90+ minutes for 1 GPU)
+# - Will use all 4 GPUs automatically

@@ -1,0 +1,12 @@
+{"time":"2025-08-26T07:33:02.141661213+03:00","level":"INFO","msg":"stream: starting","core version":"0.21.1"}
+{"time":"2025-08-26T07:33:02.465085749+03:00","level":"INFO","msg":"stream: created new stream","id":"rtao405v"}
+{"time":"2025-08-26T07:33:02.465125407+03:00","level":"INFO","msg":"stream: started","id":"rtao405v"}
+{"time":"2025-08-26T07:33:02.465141631+03:00","level":"INFO","msg":"writer: started","stream_id":"rtao405v"}
+{"time":"2025-08-26T07:33:02.465179981+03:00","level":"INFO","msg":"handler: started","stream_id":"rtao405v"}
+{"time":"2025-08-26T07:33:02.465142438+03:00","level":"INFO","msg":"sender: started","stream_id":"rtao405v"}
+{"time":"2025-08-26T07:38:32.961782857+03:00","level":"INFO","msg":"fileTransfer: Close: file transfer manager closed"}
+{"time":"2025-08-26T07:38:33.198718032+03:00","level":"INFO","msg":"handler: operation stats","stats":{"operations":[{"desc":"uploading history steps 9-11, summary, console lines 340-348","runtime_seconds":0.236806868}],"total_operations":1}}
+{"time":"2025-08-26T07:38:33.207640432+03:00","level":"INFO","msg":"stream: closing","id":"rtao405v"}
+{"time":"2025-08-26T07:38:33.207673061+03:00","level":"INFO","msg":"handler: closed","stream_id":"rtao405v"}
+{"time":"2025-08-26T07:38:33.207735675+03:00","level":"INFO","msg":"sender: closed","stream_id":"rtao405v"}
+{"time":"2025-08-26T07:38:33.207752816+03:00","level":"INFO","msg":"stream: closed","id":"rtao405v"}

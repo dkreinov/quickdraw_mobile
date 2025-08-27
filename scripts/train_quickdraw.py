@@ -63,6 +63,8 @@ def parse_args():
                        help="Number of training epochs")
     parser.add_argument("--warmup-epochs", type=int, default=2,
                        help="Number of warmup epochs")
+    parser.add_argument("--schedule-time-unit", type=str, default="step", choices=["epoch", "step"],
+                       help="LR schedule defined by epoch progress or raw steps")
     parser.add_argument("--batch-size", type=int, default=256,
                        help="Batch size")
     parser.add_argument("--lr", type=float, default=3e-4,
@@ -74,6 +76,15 @@ def parse_args():
     parser.add_argument("--grad-clip", type=float, default=1.0,
                        help="Gradient clipping norm")
     
+    # Optimizer arguments
+    parser.add_argument("--optimizer", type=str, default="adamw", 
+                       choices=["adamw", "lamb", "adamw_large"],
+                       help="Optimizer to use (LAMB recommended for large batch multi-GPU)")
+    parser.add_argument("--auto-scale-lr", action="store_true",
+                       help="Automatically scale learning rate based on batch size")
+    parser.add_argument("--base-batch-size", type=int, default=64,
+                       help="Reference batch size for LR scaling")
+    
     # System arguments
     parser.add_argument("--device", type=str, default="auto",
                        help="Device to use (auto/cpu/cuda)")
@@ -81,6 +92,8 @@ def parse_args():
                        help="Number of data loading workers")
     parser.add_argument("--save-dir", type=str, default="results",
                        help="Directory to save results")
+    parser.add_argument("--experiment-name", type=str, default=None,
+                       help="Custom experiment name for organized results")
     parser.add_argument("--no-amp", action="store_true",
                        help="Disable mixed precision training")
     parser.add_argument("--seed", type=int, default=42,
@@ -164,6 +177,12 @@ def main():
         
         # Move model to device
         model = model.to(device)
+        
+        # Enable multi-GPU training if available
+        if torch.cuda.device_count() > 1 and device.type == "cuda":
+            log_and_print(f"  Using {torch.cuda.device_count()} GPUs for training", logger)
+            model = torch.nn.DataParallel(model)
+        
         log_and_print(f"  Model moved to device: {device}", logger)
         
         # Create training configuration
@@ -172,6 +191,10 @@ def main():
             weight_decay=args.weight_decay,
             warmup_epochs=args.warmup_epochs,
             total_epochs=args.epochs,
+            optimizer_name=args.optimizer,
+            auto_scale_lr=args.auto_scale_lr,
+            base_batch_size=args.base_batch_size,
+            schedule_time_unit=args.schedule_time_unit,
             label_smoothing=args.label_smoothing,
             gradient_clip_norm=args.grad_clip,
             use_amp=not args.no_amp and device.type == "cuda",
@@ -188,7 +211,10 @@ def main():
         log_and_print(f"  Mixed precision: {config.use_amp}", logger)
         
         # Create trainer
-        model_name = f"{args.arch}_{args.classes}classes"
+        if args.experiment_name:
+            model_name = args.experiment_name
+        else:
+            model_name = f"{args.arch}_{args.classes}classes"
         trainer = QuickDrawTrainer(
             model=model,
             train_loader=train_loader,

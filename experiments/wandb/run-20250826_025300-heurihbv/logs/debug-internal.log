@@ -1,0 +1,12 @@
+{"time":"2025-08-26T02:53:00.75499318+03:00","level":"INFO","msg":"stream: starting","core version":"0.21.1"}
+{"time":"2025-08-26T02:53:01.077332659+03:00","level":"INFO","msg":"stream: created new stream","id":"heurihbv"}
+{"time":"2025-08-26T02:53:01.077367317+03:00","level":"INFO","msg":"stream: started","id":"heurihbv"}
+{"time":"2025-08-26T02:53:01.077381898+03:00","level":"INFO","msg":"writer: started","stream_id":"heurihbv"}
+{"time":"2025-08-26T02:53:01.077382355+03:00","level":"INFO","msg":"handler: started","stream_id":"heurihbv"}
+{"time":"2025-08-26T02:53:01.077453471+03:00","level":"INFO","msg":"sender: started","stream_id":"heurihbv"}
+{"time":"2025-08-26T02:58:25.415730323+03:00","level":"INFO","msg":"fileTransfer: Close: file transfer manager closed"}
+{"time":"2025-08-26T02:58:25.641777212+03:00","level":"INFO","msg":"handler: operation stats","stats":{}}
+{"time":"2025-08-26T02:58:25.646533125+03:00","level":"INFO","msg":"stream: closing","id":"heurihbv"}
+{"time":"2025-08-26T02:58:25.646554242+03:00","level":"INFO","msg":"handler: closed","stream_id":"heurihbv"}
+{"time":"2025-08-26T02:58:25.646628572+03:00","level":"INFO","msg":"sender: closed","stream_id":"heurihbv"}
+{"time":"2025-08-26T02:58:25.646644782+03:00","level":"INFO","msg":"stream: closed","id":"heurihbv"}

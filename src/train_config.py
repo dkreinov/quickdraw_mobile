@@ -1,7 +1,8 @@
 """Step 3.2: Training Configuration for QuickDraw Vision Models.
 
 This module provides comprehensive training configuration including:
-- AdamW optimizer with warmup + cosine decay
+- Multiple optimizer support (AdamW, LAMB for large batch training)
+- Warmup + cosine decay scheduling
 - Cross-entropy loss with label smoothing
 - Mixed precision (AMP) support
 - Gradient clipping and regularization
@@ -12,6 +13,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.optim.lr_scheduler import CosineAnnealingLR, LinearLR, SequentialLR
+import math
 try:
     # Try new API first (PyTorch 2.0+)
     from torch.amp import GradScaler
@@ -33,6 +35,18 @@ except ImportError:
     def get_logger(name): return logging.getLogger(name)
     def log_and_print(msg, logger_instance=None, level="INFO"): print(msg)
 
+# Try to import custom optimizers for large batch training
+try:
+    from .optimizers import create_optimizer_for_large_batch, get_recommended_lr_for_batch_size
+    CUSTOM_OPTIMIZERS_AVAILABLE = True
+except ImportError:
+    # Try absolute import if relative import fails
+    try:
+        from optimizers import create_optimizer_for_large_batch, get_recommended_lr_for_batch_size
+        CUSTOM_OPTIMIZERS_AVAILABLE = True
+    except ImportError:
+        CUSTOM_OPTIMIZERS_AVAILABLE = False
+
 
 class TrainingConfig:
     """
@@ -53,6 +67,12 @@ class TrainingConfig:
         weight_decay: float = 0.05,
         warmup_epochs: int = 2,
         total_epochs: int = 20,
+        optimizer_name: str = "adamw",  # "adamw", "lamb", "adamw_large"
+        auto_scale_lr: bool = False,  # Auto-scale LR for large batches
+        base_batch_size: int = 64,    # Reference batch size for LR scaling
+        
+        # Scheduler
+        schedule_time_unit: str = "step",
         
         # Regularization
         label_smoothing: float = 0.1,
@@ -73,6 +93,10 @@ class TrainingConfig:
         self.weight_decay = weight_decay
         self.warmup_epochs = warmup_epochs
         self.total_epochs = total_epochs
+        self.optimizer_name = optimizer_name.lower()
+        self.auto_scale_lr = auto_scale_lr
+        self.base_batch_size = base_batch_size
+        self.schedule_time_unit = schedule_time_unit
         
         self.label_smoothing = label_smoothing
         self.gradient_clip_norm = gradient_clip_norm
@@ -114,15 +138,53 @@ class TrainingConfig:
         # Set deterministic algorithms
         torch.use_deterministic_algorithms(True, warn_only=True)
     
-    def create_optimizer(self, model: nn.Module) -> optim.Optimizer:
+    def create_optimizer(self, model: nn.Module, current_batch_size: Optional[int] = None) -> optim.Optimizer:
         """
-        Create AdamW optimizer with proper weight decay groups.
+        Create optimizer with support for large batch training.
         
-        Follows best practices:
-        - No weight decay on bias and normalization layers
-        - Different weight decay for different parameter groups
+        Supports:
+        - AdamW: Standard optimizer for small-medium batches
+        - LAMB: Layer-wise adaptive optimizer for large batches
+        - AdamW Large: Enhanced AdamW for large batch training
+        
+        Args:
+            model: PyTorch model
+            current_batch_size: Current effective batch size for LR scaling
         """
         
+        # Auto-scale learning rate if enabled
+        effective_lr = self.learning_rate
+        if self.auto_scale_lr and current_batch_size is not None:
+            if CUSTOM_OPTIMIZERS_AVAILABLE:
+                scaling_method = "sqrt" if self.optimizer_name == "lamb" else "custom"
+                effective_lr = get_recommended_lr_for_batch_size(
+                    self.learning_rate,
+                    self.base_batch_size,
+                    current_batch_size,
+                    scaling_method
+                )
+                log_and_print(f"Auto-scaled LR: {self.learning_rate:.6f} -> {effective_lr:.6f} "
+                            f"(batch {self.base_batch_size} -> {current_batch_size})", self.logger)
+        
+        # Use custom optimizers if available and requested
+        if CUSTOM_OPTIMIZERS_AVAILABLE and self.optimizer_name in ["lamb", "adamw_large"]:
+            optimizer = create_optimizer_for_large_batch(
+                model,
+                optimizer_name=self.optimizer_name,
+                lr=effective_lr,
+                weight_decay=self.weight_decay,
+                betas=(0.9, 0.999),
+                eps=1e-6 if self.optimizer_name == "lamb" else 1e-8
+            )
+            
+            log_and_print(f"Created {self.optimizer_name.upper()} optimizer:", self.logger)
+            log_and_print(f"   Learning rate: {effective_lr:.6f}", self.logger)
+            log_and_print(f"   Weight decay: {self.weight_decay}", self.logger)
+            log_and_print(f"   Optimizer type: {type(optimizer).__name__}", self.logger)
+            
+            return optimizer
+        
+        # Fallback to standard AdamW
         # Separate parameters for weight decay
         decay_params = []
         no_decay_params = []
@@ -152,13 +214,14 @@ class TrainingConfig:
         
         optimizer = optim.AdamW(
             param_groups,
-            lr=self.learning_rate,
+            lr=effective_lr,
             betas=(0.9, 0.999),
             eps=1e-8
         )
         
-        log_and_print(f"Created AdamW optimizer:", self.logger)
-        log_and_print(f"   Learning rate: {self.learning_rate}", self.logger)
+        optimizer_name = self.optimizer_name if self.optimizer_name == "adamw" else f"{self.optimizer_name} (fallback to AdamW)"
+        log_and_print(f"Created {optimizer_name} optimizer:", self.logger)
+        log_and_print(f"   Learning rate: {effective_lr:.6f}", self.logger)
         log_and_print(f"   Weight decay: {self.weight_decay}", self.logger)
         log_and_print(f"   Decay params: {len(decay_params)}", self.logger)
         log_and_print(f"   No-decay params: {len(no_decay_params)}", self.logger)
@@ -169,53 +232,81 @@ class TrainingConfig:
         """
         Create warmup + cosine annealing scheduler.
         
-        Args:
-            optimizer: The optimizer to schedule
-            steps_per_epoch: Number of training steps per epoch
-            
-        Returns:
-            Combined warmup + cosine scheduler
+        Modes:
+          - 'epoch': schedule progresses per epoch (warmup_epochs/total_epochs)
+          - 'step' : schedule progresses per optimizer step (original behavior)
         """
+        unit = getattr(self, "schedule_time_unit", "epoch")
+        if unit not in ("epoch", "step"):
+            unit = "epoch"
         
-        warmup_steps = self.warmup_epochs * steps_per_epoch
-        total_steps = self.total_epochs * steps_per_epoch
-        cosine_steps = total_steps - warmup_steps
+        if unit == "epoch":
+            warmup_iters = max(0, int(self.warmup_epochs))
+            total_iters = max(1, int(self.total_epochs))
+            
+            if warmup_iters > 0:
+                warmup_scheduler = LinearLR(
+                    optimizer,
+                    start_factor=0.01,
+                    end_factor=1.0,
+                    total_iters=warmup_iters
+                )
+                cosine_scheduler = CosineAnnealingLR(
+                    optimizer,
+                    T_max=max(1, total_iters - warmup_iters),
+                    eta_min=1e-7
+                )
+                scheduler = SequentialLR(
+                    optimizer,
+                    schedulers=[warmup_scheduler, cosine_scheduler],
+                    milestones=[warmup_iters]
+                )
+            else:
+                scheduler = CosineAnnealingLR(
+                    optimizer,
+                    T_max=total_iters,
+                    eta_min=1e-7
+                )
+            
+            log_and_print(f"Created learning rate scheduler (epoch-based):", self.logger)
+            log_and_print(f"   Warmup epochs: {warmup_iters}", self.logger)
+            log_and_print(f"   Total epochs: {total_iters}", self.logger)
+            log_and_print(f"   Steps per epoch: {steps_per_epoch}", self.logger)
+            return scheduler
+        
+        # step-based
+        warmup_steps = int(self.warmup_epochs * steps_per_epoch)
+        total_steps = int(self.total_epochs * steps_per_epoch)
+        cosine_steps = max(1, total_steps - warmup_steps)
         
         if warmup_steps > 0:
-            # Warmup scheduler: linear increase from small fraction to learning_rate
             warmup_scheduler = LinearLR(
                 optimizer,
-                start_factor=0.01,  # Start at 1% of LR
-                end_factor=1.0,     # End at full LR
+                start_factor=0.01,
+                end_factor=1.0,
                 total_iters=warmup_steps
             )
-            
-            # Cosine annealing scheduler: cosine decay after warmup
             cosine_scheduler = CosineAnnealingLR(
                 optimizer,
                 T_max=cosine_steps,
-                eta_min=1e-7  # Minimum learning rate
+                eta_min=1e-7
             )
-            
-            # Combine both schedulers
             scheduler = SequentialLR(
                 optimizer,
                 schedulers=[warmup_scheduler, cosine_scheduler],
                 milestones=[warmup_steps]
             )
         else:
-            # Just cosine annealing if no warmup
             scheduler = CosineAnnealingLR(
                 optimizer,
                 T_max=total_steps,
                 eta_min=1e-7
             )
         
-        log_and_print(f"Created learning rate scheduler:", self.logger)
+        log_and_print(f"Created learning rate scheduler (step-based):", self.logger)
         log_and_print(f"   Warmup steps: {warmup_steps}", self.logger)
         log_and_print(f"   Total steps: {total_steps}", self.logger)
         log_and_print(f"   Steps per epoch: {steps_per_epoch}", self.logger)
-        
         return scheduler
     
     def create_loss_function(self) -> nn.Module:
@@ -277,6 +368,7 @@ class TrainingConfig:
             'weight_decay': self.weight_decay,
             'warmup_epochs': self.warmup_epochs,
             'total_epochs': self.total_epochs,
+            'schedule_time_unit': self.schedule_time_unit,
             'label_smoothing': self.label_smoothing,
             'gradient_clip_norm': self.gradient_clip_norm,
             'use_amp': self.use_amp,

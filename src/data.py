@@ -604,9 +604,14 @@ def load_precomputed_split(
         
         # Verify the split matches our requirements
         metadata = split_config['metadata']
-        if (metadata['classes'] == classes and 
-            metadata['train_samples_per_class'] == train_samples_per_class and
-            metadata['val_samples_per_class'] == val_samples_per_class and
+        # Handle both class count (int) and class list comparisons
+        classes_match = (
+            (isinstance(classes, int) and metadata['classes'] == classes) or
+            (isinstance(classes, list) and metadata['classes'] == len(classes))
+        )
+        if (classes_match and 
+            metadata['train_samples'] == train_samples_per_class and
+            metadata['val_samples'] == val_samples_per_class and
             metadata['seed'] == seed):
             
             splits = split_config['splits']
@@ -887,8 +892,12 @@ def create_dataloaders(
     batch_size: int = 64,
     num_workers: int = 4,
     invert_colors: bool = True,
-    seed: int = 42
+    seed: int = 42,
+    splits_dir: str = "data/splits"
 ) -> Tuple[DataLoader, DataLoader, Dict]:
+    import time
+    import json
+    from pathlib import Path
     """
     Create training and validation dataloaders with metadata.
     
@@ -931,6 +940,8 @@ def create_dataloaders(
         log_and_print(f"Auto-selected {num_classes} classes: {classes}", logger_instance=logger)
     
     # Create training dataset (with augmentation)
+    dataset_start = time.time()
+    print(f"⏱️  Creating train dataset...")
     train_dataset = QuickDrawDataset(
         data_dir=data_dir,
         classes=classes,
@@ -940,8 +951,12 @@ def create_dataloaders(
         invert_colors=invert_colors,
         seed=seed
     )
+    train_dataset_time = time.time() - dataset_start
+    print(f"⏱️  Train dataset creation took: {train_dataset_time:.2f}s")
     
     # Create validation dataset (no augmentation)
+    val_dataset_start = time.time()
+    print(f"⏱️  Creating val dataset...")
     val_dataset = QuickDrawDataset(
         data_dir=data_dir,
         classes=train_dataset.selected_classes,  # Use same classes as train
@@ -951,30 +966,62 @@ def create_dataloaders(
         invert_colors=invert_colors,
         seed=seed
     )
+    val_dataset_time = time.time() - val_dataset_start
+    print(f"⏱️  Val dataset creation took: {val_dataset_time:.2f}s")
     
     # Try to load pre-computed split first
     logger = get_logger(__name__)
     log_and_print("\nLoading train/val split...", logger_instance=logger)
+    timing_start = time.time()
     
     precomputed_split = load_precomputed_split(
-        train_dataset.selected_classes, train_samples_per_class, val_samples_per_class, seed
+        train_dataset.selected_classes, train_samples_per_class, val_samples_per_class, 
+        seed=seed, splits_dir=splits_dir
     )
     
     if precomputed_split is not None:
         train_indices, val_indices = precomputed_split
         log_and_print("Using pre-computed split (fast loading)", logger_instance=logger)
+        split_time = time.time() - timing_start
+        print(f"⏱️  Split loading took: {split_time:.2f}s")
     else:
         log_and_print("Pre-computed split not found, computing on-the-fly...", logger_instance=logger)
         log_and_print("Run 'python scripts/precompute_splits.py' to speed up future runs", logger_instance=logger)
-    train_indices, val_indices = create_stratified_split(
-        train_dataset, train_samples_per_class, val_samples_per_class, seed
-    )
+        train_indices, val_indices = create_stratified_split(
+            train_dataset, train_samples_per_class, val_samples_per_class, seed
+        )
+        split_time = time.time() - timing_start
+        print(f"⏱️  Split computation took: {split_time:.2f}s")
+        
+        # Debug: verify indices are in range
+        max_idx = max(max(train_indices), max(val_indices))
+        dataset_size = len(train_dataset)
+        print(f"🔍 Split verification: max_index={max_idx}, dataset_size={dataset_size}")
+        if max_idx >= dataset_size:
+            print(f"❌ ERROR: Split indices out of range! max_idx={max_idx} >= dataset_size={dataset_size}")
+        else:
+            print(f"✅ Split indices OK: max_idx={max_idx} < dataset_size={dataset_size}")
+            # Save the correct split for future use
+            split_data = {
+                'metadata': {'classes': len(train_dataset.selected_classes), 'train_samples': train_samples_per_class, 'val_samples': val_samples_per_class, 'seed': seed},
+                'splits': {'train_indices': train_indices, 'val_indices': val_indices},
+                'class_info': {'selected_classes': train_dataset.selected_classes}
+            }
+            Path(splits_dir).mkdir(exist_ok=True)
+            split_file_path = Path(splits_dir) / f"split_{len(train_dataset.selected_classes)}c_{train_samples_per_class}+{val_samples_per_class}_seed{seed}.json"
+            with open(split_file_path, 'w') as f:
+                json.dump(split_data, f)
+            print(f"💾 Saved correct split to: {split_file_path}")
     
     # Create subset datasets
+    subset_start = time.time()
     train_subset = torch.utils.data.Subset(train_dataset, train_indices)
     val_subset = torch.utils.data.Subset(val_dataset, val_indices)
+    subset_time = time.time() - subset_start
+    print(f"⏱️  Subset creation took: {subset_time:.2f}s")
     
     # Create dataloaders
+    dataloader_start = time.time()
     train_loader = DataLoader(
         train_subset,
         batch_size=batch_size,
@@ -991,6 +1038,12 @@ def create_dataloaders(
         num_workers=num_workers,
         pin_memory=True
     )
+    
+    dataloader_time = time.time() - dataloader_start
+    print(f"⏱️  DataLoader creation took: {dataloader_time:.2f}s")
+    
+    total_time = time.time() - timing_start
+    print(f"⏱️  TOTAL data loading time: {total_time:.2f}s")
     
     # Create metadata
     metadata = {

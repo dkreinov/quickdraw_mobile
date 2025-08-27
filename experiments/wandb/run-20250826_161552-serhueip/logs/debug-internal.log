@@ -1,0 +1,11 @@
+{"time":"2025-08-26T16:15:52.803856611+03:00","level":"INFO","msg":"stream: starting","core version":"0.21.1"}
+{"time":"2025-08-26T16:15:53.141885776+03:00","level":"INFO","msg":"stream: created new stream","id":"serhueip"}
+{"time":"2025-08-26T16:15:53.141955847+03:00","level":"INFO","msg":"stream: started","id":"serhueip"}
+{"time":"2025-08-26T16:15:53.14196326+03:00","level":"INFO","msg":"handler: started","stream_id":"serhueip"}
+{"time":"2025-08-26T16:15:53.141968418+03:00","level":"INFO","msg":"sender: started","stream_id":"serhueip"}
+{"time":"2025-08-26T16:15:53.141980671+03:00","level":"INFO","msg":"writer: started","stream_id":"serhueip"}
+{"time":"2025-08-26T16:21:35.751863417+03:00","level":"INFO","msg":"stream: closing","id":"serhueip"}
+{"time":"2025-08-26T16:21:36.37306558+03:00","level":"INFO","msg":"fileTransfer: Close: file transfer manager closed"}
+{"time":"2025-08-26T16:21:36.600551831+03:00","level":"INFO","msg":"handler: closed","stream_id":"serhueip"}
+{"time":"2025-08-26T16:21:36.600683053+03:00","level":"INFO","msg":"sender: closed","stream_id":"serhueip"}
+{"time":"2025-08-26T16:21:36.60071318+03:00","level":"INFO","msg":"stream: closed","id":"serhueip"}

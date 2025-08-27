@@ -1,0 +1,8 @@
+wandb_version: 1
+
+learning_rate:
+  value: 0.0004855843231699318
+warmup_epochs:
+  value: 2
+weight_decay:
+  value: 0.13479301079647052

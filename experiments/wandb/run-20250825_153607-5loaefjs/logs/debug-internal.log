@@ -1,0 +1,12 @@
+{"time":"2025-08-25T15:36:07.628010884+03:00","level":"INFO","msg":"stream: starting","core version":"0.21.1"}
+{"time":"2025-08-25T15:36:07.965535131+03:00","level":"INFO","msg":"stream: created new stream","id":"5loaefjs"}
+{"time":"2025-08-25T15:36:07.965593533+03:00","level":"INFO","msg":"stream: started","id":"5loaefjs"}
+{"time":"2025-08-25T15:36:07.965606909+03:00","level":"INFO","msg":"writer: started","stream_id":"5loaefjs"}
+{"time":"2025-08-25T15:36:07.96561874+03:00","level":"INFO","msg":"handler: started","stream_id":"5loaefjs"}
+{"time":"2025-08-25T15:36:07.965609592+03:00","level":"INFO","msg":"sender: started","stream_id":"5loaefjs"}
+{"time":"2025-08-25T15:36:09.628814053+03:00","level":"INFO","msg":"fileTransfer: Close: file transfer manager closed"}
+{"time":"2025-08-25T15:36:09.648388539+03:00","level":"INFO","msg":"handler: operation stats","stats":{"operations":[{"desc":"uploading history steps 0-0, summary, console lines 4-10","runtime_seconds":0.019466452}],"total_operations":1}}
+{"time":"2025-08-25T15:36:09.877456925+03:00","level":"INFO","msg":"stream: closing","id":"5loaefjs"}
+{"time":"2025-08-25T15:36:09.877478805+03:00","level":"INFO","msg":"handler: closed","stream_id":"5loaefjs"}
+{"time":"2025-08-25T15:36:09.877519151+03:00","level":"INFO","msg":"sender: closed","stream_id":"5loaefjs"}
+{"time":"2025-08-25T15:36:09.877529937+03:00","level":"INFO","msg":"stream: closed","id":"5loaefjs"}

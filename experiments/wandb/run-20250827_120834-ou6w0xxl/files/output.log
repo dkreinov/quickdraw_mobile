@@ -1,0 +1,17 @@
+Traceback (most recent call last):
+  File "/localdrive/users/dkreinov/quickdraw-mobilevit-quant/.venv/lib/python3.10/site-packages/wandb/sdk/wandb_config.py", line 165, in __getattr__
+    return self.__getitem__(key)
+  File "/localdrive/users/dkreinov/quickdraw-mobilevit-quant/.venv/lib/python3.10/site-packages/wandb/sdk/wandb_config.py", line 130, in __getitem__
+    return self._items[key]
+KeyError: 'learning_rate'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/localdrive/users/dkreinov/quickdraw-mobilevit-quant/experiments/wandb_lamb_sweep.py", line 228, in <module>
+    train_with_wandb()
+  File "/localdrive/users/dkreinov/quickdraw-mobilevit-quant/experiments/wandb_lamb_sweep.py", line 67, in train_with_wandb
+    args['lr'] = config.learning_rate
+  File "/localdrive/users/dkreinov/quickdraw-mobilevit-quant/.venv/lib/python3.10/site-packages/wandb/sdk/wandb_config.py", line 167, in __getattr__
+    raise AttributeError(
+AttributeError: <class 'wandb.sdk.wandb_config.Config'> object has no attribute 'learning_rate'

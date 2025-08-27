@@ -1,0 +1,12 @@
+wandb_version: 1
+
+batch_size:
+  value: 768
+label_smoothing:
+  value: 0.09554286852145108
+learning_rate:
+  value: 0.0003
+warmup_epochs:
+  value: 7
+weight_decay:
+  value: 0.041318765585371474

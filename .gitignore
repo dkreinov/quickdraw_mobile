@@ -23,6 +23,7 @@ build/
 data/                     # Downloaded Parquet files (too large for git)
 results                   # Training outputs and experiments (checkpoints, logs, history)
 results/
+experiments/              # Systematic experiments (temporary, not committed)
 scripts/output/           # Generated sketch visualizations
 
 # Development tests (not committed)

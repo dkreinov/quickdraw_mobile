@@ -1,0 +1,6 @@
+{"time":"2025-08-26T09:33:51.388887614+03:00","level":"INFO","msg":"stream: starting","core version":"0.21.1"}
+{"time":"2025-08-26T09:33:51.71187415+03:00","level":"INFO","msg":"stream: created new stream","id":"dasxgrfd"}
+{"time":"2025-08-26T09:33:51.711912504+03:00","level":"INFO","msg":"stream: started","id":"dasxgrfd"}
+{"time":"2025-08-26T09:33:51.711924903+03:00","level":"INFO","msg":"writer: started","stream_id":"dasxgrfd"}
+{"time":"2025-08-26T09:33:51.711926826+03:00","level":"INFO","msg":"sender: started","stream_id":"dasxgrfd"}
+{"time":"2025-08-26T09:33:51.711940287+03:00","level":"INFO","msg":"handler: started","stream_id":"dasxgrfd"}

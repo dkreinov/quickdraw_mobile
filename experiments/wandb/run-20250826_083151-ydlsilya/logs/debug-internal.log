@@ -1,0 +1,12 @@
+{"time":"2025-08-26T08:31:51.431736477+03:00","level":"INFO","msg":"stream: starting","core version":"0.21.1"}
+{"time":"2025-08-26T08:31:51.754055054+03:00","level":"INFO","msg":"stream: created new stream","id":"ydlsilya"}
+{"time":"2025-08-26T08:31:51.754096602+03:00","level":"INFO","msg":"stream: started","id":"ydlsilya"}
+{"time":"2025-08-26T08:31:51.754104725+03:00","level":"INFO","msg":"handler: started","stream_id":"ydlsilya"}
+{"time":"2025-08-26T08:31:51.754113738+03:00","level":"INFO","msg":"sender: started","stream_id":"ydlsilya"}
+{"time":"2025-08-26T08:31:51.754117611+03:00","level":"INFO","msg":"writer: started","stream_id":"ydlsilya"}
+{"time":"2025-08-26T08:37:32.859777006+03:00","level":"INFO","msg":"fileTransfer: Close: file transfer manager closed"}
+{"time":"2025-08-26T08:37:33.086493798+03:00","level":"INFO","msg":"handler: operation stats","stats":{}}
+{"time":"2025-08-26T08:37:33.091571083+03:00","level":"INFO","msg":"stream: closing","id":"ydlsilya"}
+{"time":"2025-08-26T08:37:33.091600841+03:00","level":"INFO","msg":"handler: closed","stream_id":"ydlsilya"}
+{"time":"2025-08-26T08:37:33.091697284+03:00","level":"INFO","msg":"sender: closed","stream_id":"ydlsilya"}
+{"time":"2025-08-26T08:37:33.091707433+03:00","level":"INFO","msg":"stream: closed","id":"ydlsilya"}

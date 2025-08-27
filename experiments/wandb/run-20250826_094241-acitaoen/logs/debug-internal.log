@@ -1,0 +1,6 @@
+{"time":"2025-08-26T09:42:42.179996606+03:00","level":"INFO","msg":"stream: starting","core version":"0.21.1"}
+{"time":"2025-08-26T09:42:42.507954757+03:00","level":"INFO","msg":"stream: created new stream","id":"acitaoen"}
+{"time":"2025-08-26T09:42:42.508016253+03:00","level":"INFO","msg":"handler: started","stream_id":"acitaoen"}
+{"time":"2025-08-26T09:42:42.50803388+03:00","level":"INFO","msg":"stream: started","id":"acitaoen"}
+{"time":"2025-08-26T09:42:42.508052372+03:00","level":"INFO","msg":"writer: started","stream_id":"acitaoen"}
+{"time":"2025-08-26T09:42:42.508085639+03:00","level":"INFO","msg":"sender: started","stream_id":"acitaoen"}

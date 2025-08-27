@@ -1,0 +1,12 @@
+{"time":"2025-08-25T18:09:56.173439299+03:00","level":"INFO","msg":"stream: starting","core version":"0.21.1"}
+{"time":"2025-08-25T18:09:56.502473007+03:00","level":"INFO","msg":"stream: created new stream","id":"plgmbtko"}
+{"time":"2025-08-25T18:09:56.502551738+03:00","level":"INFO","msg":"stream: started","id":"plgmbtko"}
+{"time":"2025-08-25T18:09:56.502559744+03:00","level":"INFO","msg":"handler: started","stream_id":"plgmbtko"}
+{"time":"2025-08-25T18:09:56.5025693+03:00","level":"INFO","msg":"sender: started","stream_id":"plgmbtko"}
+{"time":"2025-08-25T18:09:56.502610092+03:00","level":"INFO","msg":"writer: started","stream_id":"plgmbtko"}
+{"time":"2025-08-25T18:15:34.474635032+03:00","level":"INFO","msg":"fileTransfer: Close: file transfer manager closed"}
+{"time":"2025-08-25T18:15:34.696914803+03:00","level":"INFO","msg":"handler: operation stats","stats":{}}
+{"time":"2025-08-25T18:15:34.701677137+03:00","level":"INFO","msg":"stream: closing","id":"plgmbtko"}
+{"time":"2025-08-25T18:15:34.701705786+03:00","level":"INFO","msg":"handler: closed","stream_id":"plgmbtko"}
+{"time":"2025-08-25T18:15:34.701819553+03:00","level":"INFO","msg":"sender: closed","stream_id":"plgmbtko"}
+{"time":"2025-08-25T18:15:34.701851279+03:00","level":"INFO","msg":"stream: closed","id":"plgmbtko"}

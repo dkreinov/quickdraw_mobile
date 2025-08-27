@@ -1,0 +1,12 @@
+{"time":"2025-08-26T10:01:50.036451974+03:00","level":"INFO","msg":"stream: starting","core version":"0.21.1"}
+{"time":"2025-08-26T10:01:50.365845284+03:00","level":"INFO","msg":"stream: created new stream","id":"gumiyp1v"}
+{"time":"2025-08-26T10:01:50.365922678+03:00","level":"INFO","msg":"stream: started","id":"gumiyp1v"}
+{"time":"2025-08-26T10:01:50.365970853+03:00","level":"INFO","msg":"writer: started","stream_id":"gumiyp1v"}
+{"time":"2025-08-26T10:01:50.365970953+03:00","level":"INFO","msg":"handler: started","stream_id":"gumiyp1v"}
+{"time":"2025-08-26T10:01:50.366079168+03:00","level":"INFO","msg":"sender: started","stream_id":"gumiyp1v"}
+{"time":"2025-08-26T10:01:53.570397411+03:00","level":"INFO","msg":"handler: operation stats","stats":{"operations":[{"desc":"uploading output.log","runtime_seconds":0.766373983,"progress":"8.9KB/8.9KB"},{"desc":"uploading config.yaml","runtime_seconds":0.531169134,"progress":"2.8KB/2.8KB"}],"total_operations":2}}
+{"time":"2025-08-26T10:01:53.717265043+03:00","level":"INFO","msg":"fileTransfer: Close: file transfer manager closed"}
+{"time":"2025-08-26T10:01:53.959424337+03:00","level":"INFO","msg":"stream: closing","id":"gumiyp1v"}
+{"time":"2025-08-26T10:01:53.959450647+03:00","level":"INFO","msg":"handler: closed","stream_id":"gumiyp1v"}
+{"time":"2025-08-26T10:01:53.959515999+03:00","level":"INFO","msg":"sender: closed","stream_id":"gumiyp1v"}
+{"time":"2025-08-26T10:01:53.959526325+03:00","level":"INFO","msg":"stream: closed","id":"gumiyp1v"}

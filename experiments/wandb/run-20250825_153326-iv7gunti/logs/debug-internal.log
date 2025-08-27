@@ -1,0 +1,12 @@
+{"time":"2025-08-25T15:33:26.914367885+03:00","level":"INFO","msg":"stream: starting","core version":"0.21.1"}
+{"time":"2025-08-25T15:33:27.242913281+03:00","level":"INFO","msg":"stream: created new stream","id":"iv7gunti"}
+{"time":"2025-08-25T15:33:27.242975001+03:00","level":"INFO","msg":"stream: started","id":"iv7gunti"}
+{"time":"2025-08-25T15:33:27.243033265+03:00","level":"INFO","msg":"writer: started","stream_id":"iv7gunti"}
+{"time":"2025-08-25T15:33:27.243070967+03:00","level":"INFO","msg":"sender: started","stream_id":"iv7gunti"}
+{"time":"2025-08-25T15:33:27.243036112+03:00","level":"INFO","msg":"handler: started","stream_id":"iv7gunti"}
+{"time":"2025-08-25T15:33:28.701303596+03:00","level":"INFO","msg":"fileTransfer: Close: file transfer manager closed"}
+{"time":"2025-08-25T15:33:28.889564641+03:00","level":"INFO","msg":"handler: operation stats","stats":{"operations":[{"desc":"uploading history steps 0-0, summary, console lines 1-10","runtime_seconds":0.188053044}],"total_operations":1}}
+{"time":"2025-08-25T15:33:28.91493159+03:00","level":"INFO","msg":"stream: closing","id":"iv7gunti"}
+{"time":"2025-08-25T15:33:28.914963694+03:00","level":"INFO","msg":"handler: closed","stream_id":"iv7gunti"}
+{"time":"2025-08-25T15:33:28.915002822+03:00","level":"INFO","msg":"sender: closed","stream_id":"iv7gunti"}
+{"time":"2025-08-25T15:33:28.915023207+03:00","level":"INFO","msg":"stream: closed","id":"iv7gunti"}

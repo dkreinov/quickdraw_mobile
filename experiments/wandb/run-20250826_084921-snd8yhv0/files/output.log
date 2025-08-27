@@ -1,0 +1,349 @@
+=== W&B Sweep Run: LR=0.002428 ===
+Using device: cuda
+Auto-selected 50 classes: ['aircraft carrier', 'arm', 'asparagus', 'backpack', 'banana', 'basketball', 'bottlecap', 'bread', 'broom', 'bulldozer', 'butterfly', 'camel', 'canoe', 'chair', 'compass', 'cookie', 'drums', 'eyeglasses', 'face', 'fan', 'fence', 'fish', 'flying saucer', 'grapes', 'hand', 'hat', 'horse', 'light bulb', 'lighthouse', 'line', 'marker', 'mountain', 'mouse', 'parachute', 'passport', 'pliers', 'potato', 'sea turtle', 'snowflake', 'spider', 'square', 'steak', 'swing set', 'sword', 'television', 'tennis racquet', 'toothbrush', 'train', 'umbrella', 'washing machine']
+Loading QuickDraw dataset from: ../data/quickdraw_parquet
+Available classes: 344
+Using 50 classes: ['aircraft carrier', 'arm', 'asparagus', 'backpack', 'banana', 'basketball', 'bottlecap', 'bread', 'broom', 'bulldozer']...
+Using per-class Parquet format (recommended)...
+  Loading 50 classes concurrently from per-class files...
+    aircraft carrier: 1200 samples
+    arm: 1200 samples
+    asparagus: 1200 samples
+    backpack: 1200 samples
+    banana: 1200 samples
+    basketball: 1200 samples
+    bottlecap: 1200 samples
+    bread: 1200 samples
+    broom: 1200 samples
+    bulldozer: 1200 samples
+    butterfly: 1200 samples
+    camel: 1200 samples
+    canoe: 1200 samples
+    chair: 1200 samples
+    compass: 1200 samples
+    cookie: 1200 samples
+    drums: 1200 samples
+    eyeglasses: 1200 samples
+    face: 1200 samples
+    fan: 1200 samples
+    fence: 1200 samples
+    fish: 1200 samples
+    flying saucer: 1200 samples
+    grapes: 1200 samples
+    hand: 1200 samples
+    hat: 1200 samples
+    horse: 1200 samples
+    light bulb: 1200 samples
+    lighthouse: 1200 samples
+    line: 1200 samples
+    marker: 1200 samples
+    mountain: 1200 samples
+    mouse: 1200 samples
+    parachute: 1200 samples
+    passport: 1200 samples
+    pliers: 1200 samples
+    potato: 1200 samples
+    sea turtle: 1200 samples
+    snowflake: 1200 samples
+    spider: 1200 samples
+    square: 1200 samples
+    steak: 1200 samples
+    swing set: 1200 samples
+    sword: 1200 samples
+    television: 1200 samples
+    tennis racquet: 1200 samples
+    toothbrush: 1200 samples
+    train: 1200 samples
+    umbrella: 1200 samples
+    washing machine: 1200 samples
+  Per-class loading complete (concurrent): 60000 samples
+Total samples: 60000
+Loading QuickDraw dataset from: ../data/quickdraw_parquet
+Available classes: 344
+Using 50 classes: ['aircraft carrier', 'arm', 'asparagus', 'backpack', 'banana', 'basketball', 'bottlecap', 'bread', 'broom', 'bulldozer']...
+Using per-class Parquet format (recommended)...
+  Loading 50 classes concurrently from per-class files...
+    aircraft carrier: 1200 samples
+    arm: 1200 samples
+    asparagus: 1200 samples
+    backpack: 1200 samples
+    banana: 1200 samples
+    basketball: 1200 samples
+    bottlecap: 1200 samples
+    bread: 1200 samples
+    broom: 1200 samples
+    bulldozer: 1200 samples
+    butterfly: 1200 samples
+    camel: 1200 samples
+    canoe: 1200 samples
+    chair: 1200 samples
+    compass: 1200 samples
+    cookie: 1200 samples
+    drums: 1200 samples
+    eyeglasses: 1200 samples
+    face: 1200 samples
+    fan: 1200 samples
+    fence: 1200 samples
+    fish: 1200 samples
+    flying saucer: 1200 samples
+    grapes: 1200 samples
+    hand: 1200 samples
+    hat: 1200 samples
+    horse: 1200 samples
+    light bulb: 1200 samples
+    lighthouse: 1200 samples
+    line: 1200 samples
+    marker: 1200 samples
+    mountain: 1200 samples
+    mouse: 1200 samples
+    parachute: 1200 samples
+    passport: 1200 samples
+    pliers: 1200 samples
+    potato: 1200 samples
+    sea turtle: 1200 samples
+    snowflake: 1200 samples
+    spider: 1200 samples
+    square: 1200 samples
+    steak: 1200 samples
+    swing set: 1200 samples
+    sword: 1200 samples
+    television: 1200 samples
+    tennis racquet: 1200 samples
+    toothbrush: 1200 samples
+    train: 1200 samples
+    umbrella: 1200 samples
+    washing machine: 1200 samples
+  Per-class loading complete (concurrent): 60000 samples
+Total samples: 60000
+
+Loading train/val split...
+Pre-computed split not found, computing on-the-fly...
+Run 'python scripts/precompute_splits.py' to speed up future runs
+  aircraft carrier: 1000 train, 200 val samples
+  arm: 1000 train, 200 val samples
+  asparagus: 1000 train, 200 val samples
+  backpack: 1000 train, 200 val samples
+  banana: 1000 train, 200 val samples
+  basketball: 1000 train, 200 val samples
+  bottlecap: 1000 train, 200 val samples
+  bread: 1000 train, 200 val samples
+  broom: 1000 train, 200 val samples
+  bulldozer: 1000 train, 200 val samples
+  butterfly: 1000 train, 200 val samples
+  camel: 1000 train, 200 val samples
+  canoe: 1000 train, 200 val samples
+  chair: 1000 train, 200 val samples
+  compass: 1000 train, 200 val samples
+  cookie: 1000 train, 200 val samples
+  drums: 1000 train, 200 val samples
+  eyeglasses: 1000 train, 200 val samples
+  face: 1000 train, 200 val samples
+  fan: 1000 train, 200 val samples
+  fence: 1000 train, 200 val samples
+  fish: 1000 train, 200 val samples
+  flying saucer: 1000 train, 200 val samples
+  grapes: 1000 train, 200 val samples
+  hand: 1000 train, 200 val samples
+  hat: 1000 train, 200 val samples
+  horse: 1000 train, 200 val samples
+  light bulb: 1000 train, 200 val samples
+  lighthouse: 1000 train, 200 val samples
+  line: 1000 train, 200 val samples
+  marker: 1000 train, 200 val samples
+  mountain: 1000 train, 200 val samples
+  mouse: 1000 train, 200 val samples
+  parachute: 1000 train, 200 val samples
+  passport: 1000 train, 200 val samples
+  pliers: 1000 train, 200 val samples
+  potato: 1000 train, 200 val samples
+  sea turtle: 1000 train, 200 val samples
+  snowflake: 1000 train, 200 val samples
+  spider: 1000 train, 200 val samples
+  square: 1000 train, 200 val samples
+  steak: 1000 train, 200 val samples
+  swing set: 1000 train, 200 val samples
+  sword: 1000 train, 200 val samples
+  television: 1000 train, 200 val samples
+  tennis racquet: 1000 train, 200 val samples
+  toothbrush: 1000 train, 200 val samples
+  train: 1000 train, 200 val samples
+  umbrella: 1000 train, 200 val samples
+  washing machine: 1000 train, 200 val samples
+
+Dataloaders created:
+  Training: 48 batches (50000 samples)
+  Validation: 10 batches (10000 samples)
+Dataset: 50 classes, 48 train batches
+
+Building model:
+   Architecture: vit_tiny_patch16_224
+   Input channels: 1 (grayscale)
+   Output classes: 50
+Creating vit_tiny_patch16_224 with 50 classes
+   Single-channel input: 1 → 3 channel conversion
+   Pretrained: False
+   Drop path rate: 0.1
+   Random initialization for single-channel weights
+
+Model info:
+   Total parameters: 5,435,762
+   Trainable parameters: 5,435,762
+   Model size: 20.74 MB
+Using 4 GPUs
+Setting up deterministic training (seed=42)
+Created AdamW optimizer:
+   Learning rate: 0.002428124282916647
+   Weight decay: 0.05
+   Decay params: 52
+   No-decay params: 100
+Created learning rate scheduler (step-based):
+   Warmup steps: 96
+   Total steps: 480
+   Steps per epoch: 48
+Created loss function:
+   Type: CrossEntropyLoss
+   Label smoothing: 0.1
+Created AMP gradient scaler
+Trainer initialized:
+  Model: wandb_lr_0.002428
+  Train batches: 48
+  Val batches: 10
+  Save directory: experiments/wandb_runs
+Starting training for 10 epochs...
+/localdrive/users/dkreinov/quickdraw-mobilevit-quant/.venv/lib/python3.10/site-packages/torch/autograd/graph.py:829: UserWarning: Deterministic behavior was enabled with either `torch.use_deterministic_algorithms(True)` or `at::Context::setDeterministicAlgorithms(true)`, but this operation is not deterministic because it uses CuBLAS and you have CUDA >= 10.2. To enable deterministic behavior in this case, you must set an environment variable before running your PyTorch application: CUBLAS_WORKSPACE_CONFIG=:4096:8 or CUBLAS_WORKSPACE_CONFIG=:16:8. For more information, go to https://docs.nvidia.com/cuda/cublas/index.html#results-reproducibility (Triggered internally at /pytorch/aten/src/ATen/Context.cpp:233.)
+  return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+/localdrive/users/dkreinov/quickdraw-mobilevit-quant/.venv/lib/python3.10/site-packages/torch/autograd/graph.py:829: UserWarning: Memory Efficient attention defaults to a non-deterministic algorithm. To explicitly enable determinism call torch.use_deterministic_algorithms(True, warn_only=False). (Triggered internally at /pytorch/aten/src/ATen/native/transformers/cuda/attention_backward.cu:775.)
+  return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+  Batch    0/48 | Loss: 3.9450 | LR: 4.93e-05 | GradNorm: 1.349
+  Batch    4/48 | Loss: 3.9189 | LR: 1.49e-04 | GradNorm: 0.650
+  Batch    8/48 | Loss: 3.9244 | LR: 2.50e-04 | GradNorm: 0.562
+  Batch   12/48 | Loss: 3.9168 | LR: 3.50e-04 | GradNorm: 0.503
+  Batch   16/48 | Loss: 3.9187 | LR: 4.50e-04 | GradNorm: 0.484
+  Batch   20/48 | Loss: 3.9142 | LR: 5.50e-04 | GradNorm: 0.584
+  Batch   24/48 | Loss: 3.8642 | LR: 6.50e-04 | GradNorm: 0.584
+  Batch   28/48 | Loss: 3.9184 | LR: 7.50e-04 | GradNorm: 2.194
+  Batch   32/48 | Loss: 3.8541 | LR: 8.51e-04 | GradNorm: 0.925
+  Batch   36/48 | Loss: 3.7941 | LR: 9.51e-04 | GradNorm: 0.785
+  Batch   40/48 | Loss: 3.7702 | LR: 1.05e-03 | GradNorm: 1.250
+  Batch   44/48 | Loss: 3.7823 | LR: 1.15e-03 | GradNorm: 1.301
+Epoch 1/10: Train=3.56%, Val=3.89%, Gap=-0.33%, LR=1.23e-03
+  Batch    0/48 | Loss: 3.8326 | LR: 1.25e-03 | GradNorm: 0.991
+  Batch    4/48 | Loss: 3.7296 | LR: 1.35e-03 | GradNorm: 1.006
+  Batch    8/48 | Loss: 3.7321 | LR: 1.45e-03 | GradNorm: 4.631
+  Batch   12/48 | Loss: 3.7523 | LR: 1.55e-03 | GradNorm: 1.227
+  Batch   16/48 | Loss: 3.6817 | LR: 1.65e-03 | GradNorm: 0.694
+  Batch   20/48 | Loss: 3.7083 | LR: 1.75e-03 | GradNorm: 0.965
+  Batch   24/48 | Loss: 3.8311 | LR: 1.85e-03 | GradNorm: 3.104
+  Batch   28/48 | Loss: 3.7808 | LR: 1.95e-03 | GradNorm: 1.669
+  Batch   32/48 | Loss: 3.6664 | LR: 2.05e-03 | GradNorm: 0.979
+  Batch   36/48 | Loss: 3.8348 | LR: 2.15e-03 | GradNorm: 2.779
+  Batch   40/48 | Loss: 3.7002 | LR: 2.25e-03 | GradNorm: 0.932
+  Batch   44/48 | Loss: 3.6055 | LR: 2.35e-03 | GradNorm: 0.710
+/localdrive/users/dkreinov/quickdraw-mobilevit-quant/.venv/lib/python3.10/site-packages/torch/optim/lr_scheduler.py:209: UserWarning: The epoch parameter in `scheduler.step()` was not necessary and is being deprecated where possible. Please use `scheduler.step()` to step the scheduler. During the deprecation, if epoch is different from None, the closed form is used instead of the new chainable form, where available. Please open an issue if you are unable to replicate your use case: https://github.com/pytorch/pytorch/issues/new/choose.
+  warnings.warn(EPOCH_DEPRECATION_WARNING, UserWarning)
+Epoch 2/10: Train=5.85%, Val=7.08%, Gap=-1.23%, LR=2.43e-03
+  Batch    0/48 | Loss: 3.5768 | LR: 2.43e-03 | GradNorm: 0.827
+  Batch    4/48 | Loss: 3.6563 | LR: 2.43e-03 | GradNorm: 2.872
+  Batch    8/48 | Loss: 3.6733 | LR: 2.42e-03 | GradNorm: 1.287
+  Batch   12/48 | Loss: 4.4652 | LR: 2.42e-03 | GradNorm: 2.280
+  Batch   16/48 | Loss: 3.9519 | LR: 2.42e-03 | GradNorm: 0.870
+  Batch   20/48 | Loss: 3.8978 | LR: 2.41e-03 | GradNorm: 0.762
+  Batch   24/48 | Loss: 3.8493 | LR: 2.40e-03 | GradNorm: 0.597
+  Batch   28/48 | Loss: 3.8316 | LR: 2.39e-03 | GradNorm: 0.633
+  Batch   32/48 | Loss: 3.8075 | LR: 2.38e-03 | GradNorm: 0.529
+  Batch   36/48 | Loss: 3.8021 | LR: 2.37e-03 | GradNorm: 0.448
+  Batch   40/48 | Loss: 3.7947 | LR: 2.36e-03 | GradNorm: 0.554
+  Batch   44/48 | Loss: 3.7634 | LR: 2.35e-03 | GradNorm: 0.782
+Epoch 3/10: Train=4.85%, Val=3.17%, Gap=1.68%, LR=2.34e-03
+  Batch    0/48 | Loss: 3.8225 | LR: 2.33e-03 | GradNorm: 1.078
+  Batch    4/48 | Loss: 3.7794 | LR: 2.32e-03 | GradNorm: 0.993
+  Batch    8/48 | Loss: 3.7640 | LR: 2.30e-03 | GradNorm: 0.446
+  Batch   12/48 | Loss: 3.7688 | LR: 2.28e-03 | GradNorm: 0.649
+  Batch   16/48 | Loss: 3.7411 | LR: 2.26e-03 | GradNorm: 0.497
+  Batch   20/48 | Loss: 3.7477 | LR: 2.24e-03 | GradNorm: 0.510
+  Batch   24/48 | Loss: 3.7600 | LR: 2.22e-03 | GradNorm: 0.652
+  Batch   28/48 | Loss: 3.7226 | LR: 2.20e-03 | GradNorm: 0.690
+  Batch   32/48 | Loss: 3.7356 | LR: 2.17e-03 | GradNorm: 0.834
+  Batch   36/48 | Loss: 3.7303 | LR: 2.15e-03 | GradNorm: 0.883
+  Batch   40/48 | Loss: 3.7409 | LR: 2.12e-03 | GradNorm: 0.646
+  Batch   44/48 | Loss: 3.7060 | LR: 2.09e-03 | GradNorm: 0.484
+Epoch 4/10: Train=5.09%, Val=2.64%, Gap=2.45%, LR=2.07e-03
+  Batch    0/48 | Loss: 3.8468 | LR: 2.07e-03 | GradNorm: 2.397
+  Batch    4/48 | Loss: 3.7623 | LR: 2.04e-03 | GradNorm: 0.719
+  Batch    8/48 | Loss: 3.7669 | LR: 2.01e-03 | GradNorm: 0.614
+  Batch   12/48 | Loss: 3.7302 | LR: 1.98e-03 | GradNorm: 0.387
+  Batch   16/48 | Loss: 3.7229 | LR: 1.95e-03 | GradNorm: 0.535
+  Batch   20/48 | Loss: 3.6897 | LR: 1.91e-03 | GradNorm: 0.477
+  Batch   24/48 | Loss: 3.6874 | LR: 1.88e-03 | GradNorm: 1.012
+  Batch   28/48 | Loss: 3.6985 | LR: 1.85e-03 | GradNorm: 1.134
+  Batch   32/48 | Loss: 3.6362 | LR: 1.81e-03 | GradNorm: 0.692
+  Batch   36/48 | Loss: 3.7794 | LR: 1.78e-03 | GradNorm: 2.626
+  Batch   40/48 | Loss: 3.7165 | LR: 1.74e-03 | GradNorm: 0.820
+  Batch   44/48 | Loss: 3.6494 | LR: 1.71e-03 | GradNorm: 0.654
+Epoch 5/10: Train=6.25%, Val=6.49%, Gap=-0.24%, LR=1.68e-03
+  Batch    0/48 | Loss: 3.6196 | LR: 1.67e-03 | GradNorm: 0.669
+  Batch    4/48 | Loss: 3.5664 | LR: 1.63e-03 | GradNorm: 1.960
+  Batch    8/48 | Loss: 3.5827 | LR: 1.59e-03 | GradNorm: 2.449
+  Batch   12/48 | Loss: 3.5595 | LR: 1.56e-03 | GradNorm: 1.404
+  Batch   16/48 | Loss: 3.4868 | LR: 1.52e-03 | GradNorm: 0.927
+  Batch   20/48 | Loss: 3.4457 | LR: 1.48e-03 | GradNorm: 0.752
+  Batch   24/48 | Loss: 3.4939 | LR: 1.44e-03 | GradNorm: 2.528
+  Batch   28/48 | Loss: 3.9578 | LR: 1.40e-03 | GradNorm: 10.405
+  Batch   32/48 | Loss: 3.5814 | LR: 1.36e-03 | GradNorm: 2.232
+  Batch   36/48 | Loss: 3.5464 | LR: 1.32e-03 | GradNorm: 2.386
+  Batch   40/48 | Loss: 3.4485 | LR: 1.28e-03 | GradNorm: 0.839
+  Batch   44/48 | Loss: 3.4463 | LR: 1.24e-03 | GradNorm: 2.916
+Epoch 6/10: Train=10.40%, Val=13.59%, Gap=-3.19%, LR=1.21e-03
+  Batch    0/48 | Loss: 3.4731 | LR: 1.20e-03 | GradNorm: 4.609
+  Batch    4/48 | Loss: 3.4465 | LR: 1.16e-03 | GradNorm: 1.893
+  Batch    8/48 | Loss: 3.3606 | LR: 1.12e-03 | GradNorm: 2.517
+  Batch   12/48 | Loss: 3.2771 | LR: 1.09e-03 | GradNorm: 1.167
+  Batch   16/48 | Loss: 3.3656 | LR: 1.05e-03 | GradNorm: 3.667
+  Batch   20/48 | Loss: 3.3189 | LR: 1.01e-03 | GradNorm: 1.555
+  Batch   24/48 | Loss: 3.3168 | LR: 9.68e-04 | GradNorm: 3.568
+  Batch   28/48 | Loss: 3.3184 | LR: 9.29e-04 | GradNorm: 4.132
+  Batch   32/48 | Loss: 3.2312 | LR: 8.90e-04 | GradNorm: 1.243
+  Batch   36/48 | Loss: 3.1993 | LR: 8.52e-04 | GradNorm: 2.684
+  Batch   40/48 | Loss: 3.1586 | LR: 8.14e-04 | GradNorm: 1.922
+  Batch   44/48 | Loss: 3.1356 | LR: 7.77e-04 | GradNorm: 1.506
+Epoch 7/10: Train=16.60%, Val=16.65%, Gap=-0.05%, LR=7.50e-04
+  Batch    0/48 | Loss: 3.3562 | LR: 7.40e-04 | GradNorm: 12.228
+  Batch    4/48 | Loss: 3.2161 | LR: 7.04e-04 | GradNorm: 3.604
+  Batch    8/48 | Loss: 3.1646 | LR: 6.68e-04 | GradNorm: 3.399
+  Batch   12/48 | Loss: 3.1851 | LR: 6.33e-04 | GradNorm: 2.435
+  Batch   16/48 | Loss: 3.1566 | LR: 5.99e-04 | GradNorm: 2.046
+  Batch   20/48 | Loss: 3.0785 | LR: 5.65e-04 | GradNorm: 1.913
+  Batch   24/48 | Loss: 3.0712 | LR: 5.31e-04 | GradNorm: 3.756
+  Batch   28/48 | Loss: 3.0741 | LR: 4.99e-04 | GradNorm: 1.260
+  Batch   32/48 | Loss: 3.0635 | LR: 4.67e-04 | GradNorm: 2.197
+  Batch   36/48 | Loss: 3.0969 | LR: 4.36e-04 | GradNorm: 2.754
+  Batch   40/48 | Loss: 3.0032 | LR: 4.06e-04 | GradNorm: 1.784
+  Batch   44/48 | Loss: 3.0769 | LR: 3.77e-04 | GradNorm: 2.989
+Epoch 8/10: Train=21.42%, Val=19.76%, Gap=1.66%, LR=3.56e-04
+  Batch    0/48 | Loss: 2.9961 | LR: 3.49e-04 | GradNorm: 2.165
+  Batch    4/48 | Loss: 3.0139 | LR: 3.21e-04 | GradNorm: 3.756
+  Batch    8/48 | Loss: 3.0553 | LR: 2.95e-04 | GradNorm: 2.752
+  Batch   12/48 | Loss: 3.0034 | LR: 2.69e-04 | GradNorm: 1.605
+  Batch   16/48 | Loss: 2.9546 | LR: 2.45e-04 | GradNorm: 0.822
+  Batch   20/48 | Loss: 2.9513 | LR: 2.22e-04 | GradNorm: 1.971
+  Batch   24/48 | Loss: 2.9660 | LR: 1.99e-04 | GradNorm: 2.259
+  Batch   28/48 | Loss: 2.9618 | LR: 1.78e-04 | GradNorm: 1.379
+  Batch   32/48 | Loss: 2.9884 | LR: 1.58e-04 | GradNorm: 2.467
+  Batch   36/48 | Loss: 2.9486 | LR: 1.39e-04 | GradNorm: 2.688
+  Batch   40/48 | Loss: 2.9146 | LR: 1.21e-04 | GradNorm: 2.908
+  Batch   44/48 | Loss: 2.9594 | LR: 1.04e-04 | GradNorm: 3.291
+Epoch 9/10: Train=25.60%, Val=22.88%, Gap=2.72%, LR=9.25e-05
+  Batch    0/48 | Loss: 2.9144 | LR: 8.87e-05 | GradNorm: 1.307
+  Batch    4/48 | Loss: 2.9345 | LR: 7.45e-05 | GradNorm: 1.271
+  Batch    8/48 | Loss: 2.8679 | LR: 6.14e-05 | GradNorm: 0.850
+  Batch   12/48 | Loss: 2.9110 | LR: 4.95e-05 | GradNorm: 1.048
+  Batch   16/48 | Loss: 2.8896 | LR: 3.89e-05 | GradNorm: 1.199
+  Batch   20/48 | Loss: 2.9161 | LR: 2.96e-05 | GradNorm: 1.731
+  Batch   24/48 | Loss: 2.9222 | LR: 2.15e-05 | GradNorm: 1.603
+  Batch   28/48 | Loss: 2.9276 | LR: 1.47e-05 | GradNorm: 2.246
+  Batch   32/48 | Loss: 2.9509 | LR: 9.23e-06 | GradNorm: 1.822
+  Batch   36/48 | Loss: 2.8894 | LR: 5.01e-06 | GradNorm: 1.330
+  Batch   40/48 | Loss: 2.9107 | LR: 2.09e-06 | GradNorm: 0.840
+  Batch   44/48 | Loss: 2.9062 | LR: 4.66e-07 | GradNorm: 1.294
+Epoch 10/10: Train=27.38%, Val=22.92%, Gap=4.46%, LR=1.00e-07
+Best validation accuracy: 22.92%
