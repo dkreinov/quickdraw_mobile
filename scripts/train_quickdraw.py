@@ -75,6 +75,8 @@ def parse_args():
                        help="Label smoothing")
     parser.add_argument("--grad-clip", type=float, default=1.0,
                        help="Gradient clipping norm")
+    parser.add_argument("--early-stopping", type=int, default=5,
+                       help="Early stopping patience in epochs (0 = disabled)")
     
     # Optimizer arguments
     parser.add_argument("--optimizer", type=str, default="adamw", 
@@ -98,6 +100,8 @@ def parse_args():
                        help="Disable mixed precision training")
     parser.add_argument("--seed", type=int, default=42,
                        help="Random seed")
+    parser.add_argument("--resume-from", type=str, default=None,
+                       help="Path to checkpoint to resume training from")
     
     return parser.parse_args()
 
@@ -197,6 +201,7 @@ def main():
             schedule_time_unit=args.schedule_time_unit,
             label_smoothing=args.label_smoothing,
             gradient_clip_norm=args.grad_clip,
+            early_stopping_patience=args.early_stopping,
             use_amp=not args.no_amp and device.type == "cuda",
             seed=args.seed,
             device=device
@@ -208,6 +213,7 @@ def main():
         log_and_print(f"  Epochs: {config.total_epochs} (warmup: {config.warmup_epochs})", logger)
         log_and_print(f"  Label smoothing: {config.label_smoothing}", logger)
         log_and_print(f"  Gradient clipping: {config.gradient_clip_norm}", logger)
+        log_and_print(f"  Early stopping: {config.early_stopping_patience} epochs", logger)
         log_and_print(f"  Mixed precision: {config.use_amp}", logger)
         
         # Create trainer
@@ -223,6 +229,16 @@ def main():
             save_dir=str(save_dir),
             model_name=model_name
         )
+        
+        # Resume from checkpoint if specified
+        if args.resume_from:
+            log_and_print(f"\nResuming training from checkpoint: {args.resume_from}", logger)
+            try:
+                checkpoint_meta = trainer.load_checkpoint(args.resume_from)
+                log_and_print(f"Checkpoint metadata: {checkpoint_meta}", logger)
+            except Exception as e:
+                log_and_print(f"Failed to load checkpoint: {e}", logger)
+                return 1
         
         # Start training
         log_and_print(f"\nStarting training...", logger)

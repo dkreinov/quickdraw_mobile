@@ -78,6 +78,9 @@ class TrainingConfig:
         label_smoothing: float = 0.1,
         gradient_clip_norm: float = 1.0,
         
+        # Early Stopping
+        early_stopping_patience: int = 5,  # Stop if no improvement for N epochs (0 = disabled)
+        
         # Precision & Performance
         use_amp: bool = True,  # Automatic Mixed Precision
         
@@ -100,6 +103,7 @@ class TrainingConfig:
         
         self.label_smoothing = label_smoothing
         self.gradient_clip_norm = gradient_clip_norm
+        self.early_stopping_patience = early_stopping_patience
         
         self.use_amp = use_amp
         
@@ -371,6 +375,7 @@ class TrainingConfig:
             'schedule_time_unit': self.schedule_time_unit,
             'label_smoothing': self.label_smoothing,
             'gradient_clip_norm': self.gradient_clip_norm,
+            'early_stopping_patience': self.early_stopping_patience,
             'use_amp': self.use_amp,
             'seed': self.seed,
             'deterministic': self.deterministic,

@@ -54,6 +54,11 @@ class EpochMetrics:
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
         return asdict(self)
+    
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> 'EpochMetrics':
+        """Create EpochMetrics from dictionary."""
+        return cls(**data)
 
 
 class MetricsTracker:
@@ -152,6 +157,7 @@ class QuickDrawTrainer:
         self.current_epoch = 0
         self.best_val_acc = 0.0
         self.best_epoch = 0
+        self.epochs_without_improvement = 0
         self.training_history: List[EpochMetrics] = []
         
         # Logging
@@ -287,9 +293,11 @@ class QuickDrawTrainer:
             'scheduler_state_dict': self.scheduler.state_dict(),
             'best_val_acc': self.best_val_acc,
             'best_epoch': self.best_epoch,
+            'epochs_without_improvement': self.epochs_without_improvement,
             'config': self.config.get_config_dict(),
             'metrics': metrics.to_dict(),
-            'model_name': self.model_name
+            'model_name': self.model_name,
+            'training_history': [m.to_dict() for m in self.training_history]
         }
         
         # Save latest checkpoint
@@ -301,6 +309,75 @@ class QuickDrawTrainer:
             best_path = self.save_dir / f"{self.model_name}_best.pt"
             torch.save(checkpoint, best_path)
             log_and_print(f"  Saved best model: {best_path}", self.logger)
+    
+    def load_checkpoint(self, checkpoint_path: str) -> Dict[str, Any]:
+        """
+        Load training checkpoint and restore training state.
+        
+        Args:
+            checkpoint_path: Path to checkpoint file
+            
+        Returns:
+            Dictionary with checkpoint metadata
+        """
+        from pathlib import Path
+        
+        checkpoint_path = Path(checkpoint_path)
+        if not checkpoint_path.exists():
+            raise FileNotFoundError(f"Checkpoint not found: {checkpoint_path}")
+        
+        log_and_print(f"Loading checkpoint: {checkpoint_path}", self.logger)
+        checkpoint = torch.load(checkpoint_path, map_location=self.config.device)
+        
+        # Load model state with automatic DataParallel handling
+        model_state = checkpoint['model_state_dict']
+        
+        # Check if we need to handle DataParallel prefix mismatch
+        model_keys = list(self.model.state_dict().keys())
+        checkpoint_keys = list(model_state.keys())
+        
+        has_module_current = any(key.startswith('module.') for key in model_keys)
+        has_module_checkpoint = any(key.startswith('module.') for key in checkpoint_keys)
+        
+        # Handle DataParallel compatibility
+        if has_module_checkpoint and not has_module_current:
+            # Checkpoint from DataParallel, loading into single model
+            log_and_print("Removing 'module.' prefix from checkpoint keys", self.logger)
+            model_state = {key.replace('module.', ''): value for key, value in model_state.items()}
+        elif not has_module_checkpoint and has_module_current:
+            # Checkpoint from single model, loading into DataParallel
+            log_and_print("Adding 'module.' prefix to checkpoint keys", self.logger)
+            model_state = {f'module.{key}': value for key, value in model_state.items()}
+        
+        # Load the state dict
+        self.model.load_state_dict(model_state)
+        
+        # Load optimizer state
+        self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+        
+        # Load scheduler state
+        self.scheduler.load_state_dict(checkpoint['scheduler_state_dict'])
+        
+        # Restore training state
+        self.current_epoch = checkpoint.get('epoch', 0)
+        self.best_val_acc = checkpoint.get('best_val_acc', 0.0)
+        self.best_epoch = checkpoint.get('best_epoch', 0)
+        self.epochs_without_improvement = checkpoint.get('epochs_without_improvement', 0)
+        
+        # Restore training history if available
+        if 'training_history' in checkpoint:
+            self.training_history = [EpochMetrics.from_dict(m) for m in checkpoint['training_history']]
+        
+        log_and_print(f"Checkpoint loaded successfully!", self.logger)
+        log_and_print(f"  Resuming from epoch: {self.current_epoch}", self.logger)
+        log_and_print(f"  Best validation accuracy: {self.best_val_acc:.2f}% (epoch {self.best_epoch})", self.logger)
+        log_and_print(f"  Epochs without improvement: {self.epochs_without_improvement}", self.logger)
+        
+        # Return metadata
+        metadata = {k: v for k, v in checkpoint.items() 
+                   if k not in ['model_state_dict', 'optimizer_state_dict', 'scheduler_state_dict', 'training_history']}
+        
+        return metadata
     
     def save_training_history(self):
         """Save training history to JSON file."""
@@ -334,12 +411,21 @@ class QuickDrawTrainer:
         if num_epochs is None:
             num_epochs = self.config.total_epochs
         
-        log_and_print(f"Starting training for {num_epochs} epochs", self.logger)
+        # Calculate starting epoch and remaining epochs
+        start_epoch = self.current_epoch
+        remaining_epochs = num_epochs - start_epoch
+        
+        if start_epoch > 0:
+            log_and_print(f"Resuming training from epoch {start_epoch + 1}", self.logger)
+            log_and_print(f"Training for {remaining_epochs} more epochs (total: {num_epochs})", self.logger)
+        else:
+            log_and_print(f"Starting training for {num_epochs} epochs", self.logger)
+        
         log_and_print(f"Device: {self.config.device}", self.logger)
         
         start_time = time.time()
         
-        for epoch in range(num_epochs):
+        for epoch in range(start_epoch, num_epochs):
             self.current_epoch = epoch + 1
             epoch_start = time.time()
             
@@ -382,6 +468,9 @@ class QuickDrawTrainer:
             if is_best:
                 self.best_val_acc = val_top1
                 self.best_epoch = self.current_epoch
+                self.epochs_without_improvement = 0
+            else:
+                self.epochs_without_improvement += 1
             
             # Save checkpoint
             self.save_checkpoint(metrics, is_best)
@@ -393,6 +482,16 @@ class QuickDrawTrainer:
             log_and_print(f"  LR: {current_lr:.2e}, Time: {epoch_time:.1f}s", self.logger)
             if is_best:
                 log_and_print(f"  New best validation accuracy!", self.logger)
+            else:
+                log_and_print(f"  No improvement for {self.epochs_without_improvement} epoch(s)", self.logger)
+            
+            # Check early stopping
+            if (self.config.early_stopping_patience > 0 and 
+                self.epochs_without_improvement >= self.config.early_stopping_patience):
+                log_and_print(f"\nEarly stopping triggered!", self.logger)
+                log_and_print(f"No improvement for {self.config.early_stopping_patience} consecutive epochs", self.logger)
+                log_and_print(f"Best validation accuracy: {self.best_val_acc:.2f}% (epoch {self.best_epoch})", self.logger)
+                break
         
         # Training complete
         total_time = time.time() - start_time
