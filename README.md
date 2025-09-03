@@ -20,45 +20,141 @@ This repo will train a **MobileViT/ViT** on the **Quick, Draw!** bitmap dataset,
 
 ## Multi-GPU Large Batch Training
 
-**🚀 For Multi-GPU Training: Use LAMB Optimizer for Superior Performance**
+**🚀 Latest Finding: Progressive Enhancement Strategy Achieves 73.02% on 344 Classes!**
 
-This project supports optimized multi-GPU training with significant performance improvements:
+This project demonstrates advanced training strategies including hyperparameter optimization, early stopping, resume functionality, and progressive augmentation techniques:
 
-- **Standard AdamW**: Works well for single-GPU (batch size ≤ 256)
-- **LAMB Optimizer**: **Recommended for multi-GPU** large batch training (batch size ≥ 512)
+### Performance Results (Latest - September 2025)
 
-### Performance Results
+#### 🏆 **344 Classes (Full Dataset)**
+- **Baseline (50 epochs)**: 72.95% validation accuracy
+- **Resume Training (90 epochs)**: 72.83% validation accuracy  
+- **Progressive Augmentation**: **73.02% validation accuracy** ✅ **NEW BEST!**
+- **Strong Aug from Scratch**: 72.82% validation accuracy
+
+#### 📊 **50 Classes (Subset)**
 - **Single-GPU (AdamW, batch=64)**: 68.58% validation accuracy
-- **Multi-GPU (AdamW, batch=1024)**: ~56-68% validation accuracy ❌
-- **Multi-GPU (LAMB, batch=1024)**: **86.82% validation accuracy** ✅ **+18% improvement!**
+- **Multi-GPU (AdamW, batch=1024, default)**: ~56-68% validation accuracy
+- **Multi-GPU (LAMB, batch=1024, optimized)**: 87.01% validation accuracy
+- **Multi-GPU (AdamW, batch=1024, optimized)**: **87.41% validation accuracy**
+
+### 🧠 **Key Experimental Insights**
+
+**🔬 Progressive Enhancement Strategy:**
+- **✅ Enhanced augmentation on pre-trained model**: +0.07% improvement (73.02%)
+- **❌ Enhanced augmentation from scratch**: -0.13% decline (72.82%)
+- **💡 Insight**: Strong augmentations help generalization but hurt initial feature learning
+
+**🎯 Training Strategy Lessons:**
+1. **Train baseline model first** with light augmentations
+2. **Resume with enhanced augmentations** for final polish
+3. **Early stopping** prevents overfitting (patience = 5-10 epochs)
+4. **Hyperparameter sweeps** critical for optimal performance
+
+### 🎯 **Optimal Configuration (344 Classes - 73.02% accuracy)**
+
+**Best performance achieved with progressive enhancement:**
+```bash
+# Step 1: Train baseline model
+python scripts/train_quickdraw.py \
+    --classes 344 --epochs 50 --batch-size 1024 \
+    --lr 0.0011 --optimizer adamw \
+    --label-smoothing 0.1584 --warmup-epochs 1 \
+    --weight-decay 0.04 --no-amp
+
+# Step 2: Resume with enhanced augmentations
+python scripts/train_quickdraw.py \
+    --classes 344 --epochs 70 --batch-size 1024 \
+    --lr 0.0011 --optimizer adamw \
+    --label-smoothing 0.1584 --warmup-epochs 1 \
+    --weight-decay 0.04 --no-amp --early-stopping 10 \
+    --resume-from results/best_model_best.pt
+```
 
 ### 🚨 **Critical Requirements for Success**
 
-**LAMB performance requires ALL of these settings:**
+**High performance requires ALL of these settings:**
 1. **✅ Pretrained weights**: `--pretrained` (vs training from scratch)
    - **Pretrained on**: ImageNet-21k (11M images, 21k classes) → ImageNet-1k (1.3M images, 1k classes)
-   - **With pretrained**: 86.82% validation accuracy
-   - **Without pretrained**: ~70% validation accuracy (training fails)
-2. **✅ LAMB optimizer**: `--optimizer lamb` (vs AdamW)
-3. **✅ Large batch size**: `--batch-size 1024` (for multi-GPU)
-4. **✅ Proper learning rate**: `--lr 0.0003` (LAMB-optimized)
+   - **Critical for both LAMB and AdamW performance**
+2. **✅ Optimized hyperparameters**: Learning rate, label smoothing, weight decay
+3. **✅ Proper training duration**: 30 epochs (40+ epochs hurt due to LR schedule)
+4. **✅ Large batch size**: `--batch-size 1024` (for multi-GPU)
 
-### Usage
+### Optimizer Comparison
+
+| Optimizer | Use Case | Performance |
+|-----------|----------|-------------|
+| **AdamW** | **Recommended** for moderate-scale (2-8 GPUs) | **87.41%** |
+| **LAMB** | Better for massive-scale (100+ GPUs, huge batches) | 87.01% |
+
+### Usage Examples
 ```bash
-# Single-GPU training (use AdamW)
+# Single-GPU training 
 python scripts/train_quickdraw.py --batch-size 64 --lr 0.0003
 
-# Multi-GPU training (use LAMB optimizer + pretrained weights)
+# Multi-GPU training (recommended configuration)
 python scripts/train_quickdraw.py \
-    --batch-size 1024 \
-    --lr 0.0003 \
-    --optimizer lamb \
-    --pretrained \
-    --classes 50 \
-    --epochs 30
+    --classes 50 --epochs 30 --batch-size 1024 \
+    --lr 0.0009972772070324198 \
+    --optimizer adamw \
+    --label-smoothing 0.15838902687516626 \
+    --warmup-epochs 1 \
+    --weight-decay 0.0586710517346328 \
+    --pretrained
+
+# Multi-GPU with LAMB (alternative)
+python scripts/train_quickdraw.py \
+    --batch-size 1024 --lr 0.0003 --optimizer lamb --pretrained \
+    --classes 50 --epochs 30
 ```
 
-**Key insight**: LAMB's layer-wise adaptive mechanism handles large batch optimization much better than AdamW, eliminating the need for complex learning rate scaling.
+**Key insight**: Hyperparameter optimization discovered through LAMB experiments transfers effectively to AdamW, yielding even better results. The choice between optimizers depends on training scale.
+
+## Performance Analysis
+
+Our best model achieves **73.02% validation accuracy** on all 344 QuickDraw classes using a ViT-Tiny architecture with 5.5M parameters.
+
+<details>
+<summary><strong>Detailed Performance Visualizations</strong></summary>
+
+### Per-Class Performance Distribution
+![Performance Overview](results/fp32_mobilevit_training_analysis/performance_overview.png)
+
+The top chart shows accuracy for all 344 classes sorted by performance, with color coding for different performance tiers. The bottom histogram reveals that most classes achieve 70-90% accuracy, with a few challenging outliers.
+
+### Comprehensive Performance Analysis
+![Performance Analysis](results/fp32_mobilevit_training_analysis/performance_analysis.png)
+
+This analysis examines the relationships between precision, recall, F1-scores, and sample counts. The strong correlation between accuracy and F1-scores indicates consistent performance across metrics. The comparison highlights the significant gap between top performers (triangle, envelope) and challenging classes (cooler, aircraft carrier).
+
+### Model Statistics and Distribution
+![Summary Statistics](results/fp32_mobilevit_training_analysis/summary_statistics.png)
+
+Performance breakdown shows 65% of classes achieve above 70% accuracy. The cumulative performance curve demonstrates consistent accuracy across the majority of classes, with key metrics summarized in the statistical table.
+
+### Confusion Patterns in Challenging Classes
+![Confusion Matrix](results/fp32_mobilevit_training_analysis/confusion_worst_20_classes.png)
+
+Focused analysis of the 20 most challenging classes reveals common misclassification patterns. The diagonal represents correct predictions, while off-diagonal elements show where the model struggles with visual similarity between concepts.
+
+</details>
+
+### Key Results Summary
+
+| Metric | Value |
+|--------|-------|
+| Overall Accuracy | 73.02% |
+| Classes Evaluated | 344 |
+| Total Test Samples | 68,800 |
+| Best Performing Class | triangle (94.0%) |
+| Most Challenging Class | cooler (30.0%) |
+| Performance Standard Deviation | 13.1% |
+| Classes Above 70% Accuracy | 65% |
+
+### Training Configuration
+
+The model was trained using progressive enhancement: starting with a baseline configuration, then resuming with enhanced augmentations for final optimization. Key hyperparameters include AdamW optimization with cosine scheduling, label smoothing (0.1584), and weight decay (0.04).
 
 ### Quick Start Guide
 
