@@ -20,13 +20,14 @@ This repo will train a **MobileViT/ViT** on the **Quick, Draw!** bitmap dataset,
 
 ## Multi-GPU Large Batch Training
 
-**🚀 Latest Finding: Progressive Enhancement Strategy Achieves 73.02% on 344 Classes!**
+**🚀 Latest Finding: 76.42% on 344 Classes (4k train / 500 val per class)!**
 
 This project demonstrates advanced training strategies including hyperparameter optimization, early stopping, resume functionality, and progressive augmentation techniques:
 
 ### Performance Results (Latest - September 2025)
 
 #### 🏆 **344 Classes (Full Dataset)**
+- **Full 344, 4k/500 (early stop @52/75)**: **76.42%** validation accuracy ✅ **NEW BEST!**
 - **Baseline (50 epochs)**: 72.95% validation accuracy
 - **Resume Training (90 epochs)**: 72.83% validation accuracy  
 - **Progressive Augmentation**: **73.02% validation accuracy** ✅ **NEW BEST!**
@@ -51,9 +52,21 @@ This project demonstrates advanced training strategies including hyperparameter 
 3. **Early stopping** prevents overfitting (patience = 5-10 epochs)
 4. **Hyperparameter sweeps** critical for optimal performance
 
-### 🎯 **Optimal Configuration (344 Classes - 73.02% accuracy)**
+### 🎯 **Optimal Configurations (344 Classes)**
 
-**Best performance achieved with progressive enhancement:**
+**New Best (76.42%) — Larger dataset (4k/500) with early stopping:**
+```bash
+python scripts/train_quickdraw.py \
+    --classes 344 --per-class-train 4000 --per-class-val 500 \
+    --epochs 75 --batch-size 1024 \
+    --lr 0.0011 --optimizer adamw \
+    --label-smoothing 0.1584 --warmup-epochs 1 \
+    --weight-decay 0.04 --no-amp \
+    --early-stopping 15 \
+    --experiment-name full344_4k500_regaug
+```
+
+**Progressive enhancement (73.02%):**
 ```bash
 # Step 1: Train baseline model
 python scripts/train_quickdraw.py \
@@ -113,30 +126,45 @@ python scripts/train_quickdraw.py \
 
 ## Performance Analysis
 
-Our best model achieves **73.02% validation accuracy** on all 344 QuickDraw classes using a ViT-Tiny architecture with 5.5M parameters.
+Our best model achieves **76.42% validation accuracy** on all 344 QuickDraw classes using a ViT-Tiny architecture with 5.5M parameters trained on the `full344_4k500_regaug` configuration.
 
 <details>
-<summary><strong>Detailed Performance Visualizations</strong></summary>
+<summary><strong>📊 Comprehensive Performance Visualizations</strong></summary>
 
-### Per-Class Performance Distribution
-![Performance Overview](results/fp32_mobilevit_training_analysis/performance_overview.png)
+### Per-Class Accuracy Distribution
+![Per-Class Accuracy Bars](results/best_model_76p42_visuals/per_class_accuracy_bars.png)
 
-The top chart shows accuracy for all 344 classes sorted by performance, with color coding for different performance tiers. The bottom histogram reveals that most classes achieve 70-90% accuracy, with a few challenging outliers.
+Individual accuracy performance for all 344 classes, sorted from worst to best. Color coding clearly distinguishes performance tiers: **Red** (Poor <50%), **Orange** (Fair 50-70%), **Yellow** (Good 70-85%), and **Green** (Excellent ≥85%). The visualization highlights that while most classes achieve good performance, challenging classes like "cooler" (30.0%) and "aircraft carrier" (33.5%) still present significant difficulties for the model.
 
-### Comprehensive Performance Analysis
-![Performance Analysis](results/fp32_mobilevit_training_analysis/performance_analysis.png)
+### Accuracy Distribution Analysis  
+![Accuracy Distribution](results/best_model_76p42_visuals/accuracy_distribution.png)
 
-This analysis examines the relationships between precision, recall, F1-scores, and sample counts. The strong correlation between accuracy and F1-scores indicates consistent performance across metrics. The comparison highlights the significant gap between top performers (triangle, envelope) and challenging classes (cooler, aircraft carrier).
+Histogram showing the distribution of per-class accuracies reveals a right-skewed distribution with most classes performing well. The analysis shows **162 classes (47.1%) achieve Good performance** (70-85%), while only **24 classes (7.0%) fall into the Poor category** (<50%). The mean accuracy line at 76.4% demonstrates consistent model performance across the dataset.
 
-### Model Statistics and Distribution
-![Summary Statistics](results/fp32_mobilevit_training_analysis/summary_statistics.png)
+### Model Performance Summary
+![Summary Statistics](results/best_model_76p42_visuals/summary_statistics.png)
 
-Performance breakdown shows 65% of classes achieve above 70% accuracy. The cumulative performance curve demonstrates consistent accuracy across the majority of classes, with key metrics summarized in the statistical table.
+Comprehensive performance dashboard featuring: (1) **Performance tier breakdown** with class counts and percentages, (2) **Key metrics comparison** showing overall vs. per-class accuracy with error bars, (3) **Cumulative performance curve** with quartile markers for progression analysis, and (4) **Detailed summary table** with professional formatting showing model statistics and performance gaps.
 
-### Confusion Patterns in Challenging Classes
-![Confusion Matrix](results/fp32_mobilevit_training_analysis/confusion_worst_20_classes.png)
+### Precision-Recall Analysis
+![Precision Recall Analysis](results/best_model_76p42_visuals/precision_recall_analysis.png)
 
-Focused analysis of the 20 most challenging classes reveals common misclassification patterns. The diagonal represents correct predictions, while off-diagonal elements show where the model struggles with visual similarity between concepts.
+Scatter plot examining the relationship between precision and recall across all classes, colored by accuracy. The diagonal reference line shows perfect balance, while the colorbar reveals that higher-accuracy classes (green/yellow) tend to achieve better precision-recall trade-offs. Most classes cluster in the high-precision, high-recall region, indicating robust model performance.
+
+### F1-Score Correlation Analysis
+![F1 Accuracy Correlation](results/best_model_76p42_visuals/f1_accuracy_correlation.png)
+
+Strong linear correlation (r=0.98) between F1-scores and accuracy demonstrates consistent performance across different metrics. The tight clustering around the correlation line indicates that classes performing well on accuracy also achieve high F1-scores, validating the model's balanced precision-recall characteristics across all performance levels.
+
+### Top vs Bottom Performers Comparison
+![Top Bottom Performers](results/best_model_76p42_visuals/top_bottom_performers.png)
+
+Direct comparison highlighting the **performance gap** between best and worst performing classes. Top performers include simple geometric shapes (triangle, envelope) and common objects (headphones, star), while bottom performers consist of abstract concepts (camouflage, cooler) and complex objects (aircraft carrier, marker). This analysis reveals systematic challenges with ambiguous drawings and specialized domains.
+
+### Confusion Matrix for Challenging Classes
+![Confusion Matrix](results/best_model_76p42_visuals/confusion_worst_20_classes.png)
+
+Professional confusion matrix focusing on the 20 most challenging classes, using a clean white-to-blue gradient. Diagonal values represent true class accuracy (e.g., dragon correctly identified 45.5% of the time), while off-diagonal values show systematic confusion patterns. The matrix reveals that struggling classes often get confused with visually similar objects, highlighting the model's reliance on shape-based features.
 
 </details>
 
@@ -144,7 +172,7 @@ Focused analysis of the 20 most challenging classes reveals common misclassifica
 
 | Metric | Value |
 |--------|-------|
-| Overall Accuracy | 73.02% |
+| Overall Accuracy | 76.42% |
 | Classes Evaluated | 344 |
 | Total Test Samples | 68,800 |
 | Best Performing Class | triangle (94.0%) |
