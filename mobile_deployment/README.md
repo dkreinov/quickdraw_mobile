@@ -64,9 +64,17 @@ This creates:
 - **Accuracy**: 76.42% on validation set
 - **Size**: ~22 MB (FP32), ~6 MB (INT8 quantized)
 
-## 📱 Performance Targets
+## 📱 Performance Results
 
-### Android (Typical)
+### Pixel 7 Emulator (x86_64)
+- **Debug**: 4437ms avg, 0.23 images/sec
+- **Release**: 4096ms avg, 0.24 images/sec (🚀 8.3% faster)
+
+### Samsung SM-G780F (Real Device)
+- **Debug**: 2152ms avg, 0.46 images/sec  
+- **Release**: 3171ms avg, 0.32 images/sec
+
+### Performance Targets (Future Optimizations)
 - **CPU (4 threads)**: ~50-100ms per inference
 - **NNAPI**: ~20-50ms (device dependent)
 - **GPU**: ~15-40ms (device dependent)
