@@ -1,0 +1,29 @@
+{
+  "model_info": {
+    "architecture": "vit_tiny_patch16_224",
+    "num_classes": 344,
+    "input_size": 224,
+    "input_channels": 1,
+    "input_format": "NCHW",
+    "total_params": 5492504,
+    "model_size_mb": 20.952239990234375
+  },
+  "preprocessing": {
+    "input_shape": [
+      1,
+      1,
+      224,
+      224
+    ],
+    "pixel_format": "grayscale",
+    "normalization": {
+      "note": "Use same mean/std as training",
+      "formula": "(pixel/255 - mean) / std"
+    }
+  },
+  "export_info": {
+    "source_checkpoint": "../../results/full344_4k500_regaug_best.pt",
+    "export_method": "torch.export + ExecuTorch",
+    "pte_file": "quickdraw_fp32.pte"
+  }
+}

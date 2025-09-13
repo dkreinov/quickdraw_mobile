@@ -125,22 +125,21 @@ python scripts/train_quickdraw.py \
 
 ## 📱 **Mobile Deployment Pipeline**
 
-This project includes a complete pipeline for mobile deployment:
+Complete mobile deployment pipeline available in `mobile_deployment/` folder:
 
-### 1. Model Quantization
-- **Weight-only 4-bit** (AWQ/GPTQ): Desktop inference
-- **Full INT8** (ExecuTorch): Mobile deployment
-- **Quantization-Aware Training**: Best accuracy retention
+### 1. Model Export
+- **ExecuTorch**: Export to `.pte` format for Android/iOS
+- **Labels**: Generate class names file for apps  
+- **Metadata**: Model info and preprocessing details
 
-### 2. Mobile Export
-- Export to ExecuTorch `.pte` format
-- Android integration with XNNPACK backend
-- Target: <50MB model, <100ms inference
+### 2. Platform Integration
+- **Android**: Step-by-step ExecuTorch guide (`ANDROID_EXECUTORCH_FP32.md`)
+- **iOS**: Coming soon (Core ML or TensorFlow Lite path)
 
-### 3. Android App Features (Planned)
-- Real-time drawing canvas
-- Live sketch classification
-- Confidence scores display
+### 3. Performance Features
+- Real-time drawing canvas and classification
+- Benchmarking tools (FP32 vs INT8 comparison)
+- Latency and throughput measurement
 
 ---
 
@@ -197,12 +196,16 @@ src/
   eval.py                 # Evaluation & confusion matrix generation
   quant_awq.py            # ✅ AWQ/GPTQ 4-bit weight quantization
   quant_executorch.py     # ✅ PT2E INT8 quantization with SmoothQuant
-  export_executorch.py    # ✅ Export to .pte for Android deployment
+  export_executorch.py    # (moved to mobile_deployment/scripts/)
   export_onnx.py          # (optional) ORT mobile export path
   tests/                  # (dev only) test scripts for development
 data/                     # (created by download script) Parquet data files
-android_demo/             # (later) Android app with ExecuTorch
-results/                  # (later) metrics & plots
+mobile_deployment/        # 📱 Mobile deployment pipeline
+  scripts/                # Export scripts (ExecuTorch, labels)
+  android/                # Android app projects (future)
+  ios/                    # iOS app projects (future)
+  exports/                # Generated .pte files and assets
+results/                  # Training metrics & plots
 ```
 
 ## 🗂️ **Data Pipeline Features**
